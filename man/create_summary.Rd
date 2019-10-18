@@ -4,7 +4,7 @@
 \alias{create_summary}
 \title{Create Station Summary Sheet}
 \usage{
-create_summary(summary_input, elg_input, output_csv = NULL)
+create_summary(summary_input, elg_input, csv_output = NULL)
 }
 \arguments{
 \item{summary_input}{The input datasheet that includes the relevent station and deployment metadata}
@@ -13,4 +13,10 @@ create_summary(summary_input, elg_input, output_csv = NULL)
 }
 \description{
 This function combines hand-entered station metadata with electronically recorded instrument data to output a well formatted station summary sheet.
+}
+\examples{
+# Create a summary from S285 data input and elgs
+summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
+elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
+summary <- create_summary(summary_input, elg_input)
 }

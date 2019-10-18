@@ -9,7 +9,11 @@
 #' @export
 #'
 #' @examples
-create_summary <- function(summary_input, elg_input, output_csv = NULL) {
+#' # Create a summary from S285 data input and elgs
+#' summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
+#' elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
+#' summary <- create_summary(summary_input, elg_input)
+create_summary <- function(summary_input, elg_input, csv_output = NULL) {
 
   # read in the summary_input xlsx file
   summary <- readxl::read_excel(summary_input)
@@ -43,12 +47,13 @@ create_summary <- function(summary_input, elg_input, output_csv = NULL) {
   elg_to_add <- dplyr::select(elg[ii,], lon, lat, temp, sal, fluor)
   summary <- dplyr::bind_cols(summary,elg_to_add)
 
-  # select just the fields you want
-  summary <- dplyr::select(summary, -ii)
+  # TODO: add checks to ensure that there are no duplicate deployments for any one station
 
-  if(!is.null(output_csv)) {
-    readr::write_csv(summary,output_csv)
+  if(!is.null(csv_output)) {
+    readr::write_csv(summary,csv_output)
   }
+
+  return(summary)
 
 }
 
