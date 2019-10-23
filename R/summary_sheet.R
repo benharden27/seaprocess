@@ -57,30 +57,6 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
 
 }
 
-#' Zone Description to Time Zone
-#'
-#' @param zd
-#'
-#' @return
-#' @export
-#'
-#' @examples
-zd_to_tz <- function(zd, add_r_prefix = TRUE) {
-
-  tz <- as.numeric(zd) * -1
-  tz <- as.character(tz)
-  ii <- !stringr::str_sub(tz,1,1) == "-"
-  tz[ii] <- paste0("+", tz[ii])
-  if(add_r_prefix) {
-    tz <- paste0("Etc/GMT",tz)
-  }
-
-  return(tz)
-}
-
-
-
-
 #' Format for CSV output
 #'
 #' This is a catch-all function to ensure that everytime a data-frame in this
@@ -112,6 +88,17 @@ format_csv_output <- function(df, dttm_format = "%Y-%m-%dT%H:%M", dttm_suffix = 
 }
 
 
+#' Format to number of decimal places
+#'
+#' Rather than significant figures as format() provides in its digits = 2 option.
+#'
+#' @param value
+#' @param digits
+#'
+#' @return
+#' @export
+#'
+#' @examples
 format_decimal <- function(value, digits) {
   format(round(value,digits), nsmall = digits)
 }
