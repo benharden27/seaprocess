@@ -16,16 +16,16 @@
 create_summary <- function(summary_input, elg_input, csv_output = NULL) {
 
   # read in the summary_input xlsx file
-  summary <- readxl::read_excel(summary_input)
-
-  # convert zone description to time zone
-  summary <- dplyr::mutate(summary, tz = zd_to_tz(zd))
+  summary <- readxl::read_excel(summary_input, col_types = "text")
 
   # combine date and time and convert to R datatime object using specified time zone
-  summary <- dplyr::mutate(summary, dttm = do.call("c",
-                                                   purrr::pmap(list(paste(summary$date,summary$time),
-                                                                    tz=summary$tz),
-                                                               lubridate::mdy_hm)))
+  summary <- dplyr::mutate(
+    summary,
+    dttm = lubridate::ymd_hm(
+      paste(summary$date,summary$time)
+      ) - as.numeric(summary$zd)*60*60
+    )
+
 
   # Test to see whether elg_input is a file or a folder and read elg file(s) accordingly
   # TODO: add ability to tune reading elg per options provided in that function
@@ -50,7 +50,7 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
   # TODO: add checks to ensure that there are no duplicate deployments for any one station
 
   if(!is.null(csv_output)) {
-    readr::write_csv(summary,csv_output)
+    readr::write_csv(format_csv_output(summary),csv_output)
   }
 
   return(summary)
@@ -65,16 +65,53 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
 #' @export
 #'
 #' @examples
-zd_to_tz <- function(zd) {
+zd_to_tz <- function(zd, add_r_prefix = TRUE) {
 
   tz <- as.numeric(zd) * -1
   tz <- as.character(tz)
   ii <- !stringr::str_sub(tz,1,1) == "-"
   tz[ii] <- paste0("+", tz[ii])
-  tz<- paste0("Etc/GMT",tz)
+  if(add_r_prefix) {
+    tz <- paste0("Etc/GMT",tz)
+  }
 
   return(tz)
 }
 
 
 
+
+#' Format for CSV output
+#'
+#' This is a catch-all function to ensure that everytime a data-frame in this
+#' software is exported to a csv that certain fields are formated correctly
+#'
+#' @param df Data frame to be exported
+#' @param dttm_format dttm_format
+#'
+#' @return
+#' @export
+#'
+#' @examples
+format_csv_output <- function(df, dttm_format = "%Y-%m-%dT%H:%M", dttm_suffix = "Z", ll_dec = 4, temp_dec = 2, sal_dec = 3, fluor_dec = 2) {
+
+  # Format date and time to be in ISO 8601 format including timezone
+  df$dttm <- paste0(format(df$dttm+as.numeric(df$zd)*60*60, dttm_format), df$zd)
+
+  # Format lon and lat to ~10 m resolution (by default)
+  df$lon <- format_decimal(df$lon,ll_dec)
+  df$lat <- format_decimal(df$lat,ll_dec)
+
+  # Format temp, sal and fluor to set decimal lengths
+  df$temp <- format_decimal(df$temp, temp_dec)
+  df$sal <- format_decimal(df$sal, sal_dec)
+  df$fluor <- format_decimal(df$fluor, fluor_dec)
+
+
+  return(df)
+}
+
+
+format_decimal <- function(value, digits) {
+  format(round(value,digits), nsmall = digits)
+}
