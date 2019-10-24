@@ -7,7 +7,7 @@
 #' @export
 #'
 #' @examples
-create_datasheet <- function(data_input, summary, data_type = "ctd", csv_output = NULL) {
+create_datasheet <- function(data_input, summary, data_type = "CTD", csv_output = NULL) {
 
   # read in the data_input excel sheet datasheet
   data <- readxl::read_excel(data_input)

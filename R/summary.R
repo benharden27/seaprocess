@@ -22,8 +22,8 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
   summary <- dplyr::mutate(
     summary,
     dttm = lubridate::ymd_hm(
-      paste(summary$date,summary$time)
-      ) - as.numeric(summary$zd)*60*60
+      paste(summary$date,summary$time_in)
+      ) + lubridate::hours(summary$zd)
     )
 
 
@@ -72,17 +72,21 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
 format_csv_output <- function(df, dttm_format = "%Y-%m-%dT%H:%M", dttm_suffix = "Z", ll_dec = 4, temp_dec = 2, sal_dec = 3, fluor_dec = 2) {
 
   # Format date and time to be in ISO 8601 format including timezone
-  df$dttm <- paste0(format(df$dttm+as.numeric(df$zd)*60*60, dttm_format), df$zd)
+  if("zd" %in% colnames(df) & "dttm" %in%colnames(df))
+    df$dttm <- paste0(format(df$dttm - lubridate::hours(df$zd), dttm_format), zd_to_tz(df$zd))
+
+
+  # TODO: create list of all column names and default resolutions
 
   # Format lon and lat to ~10 m resolution (by default)
-  df$lon <- format_decimal(df$lon,ll_dec)
-  df$lat <- format_decimal(df$lat,ll_dec)
+  df <- format_decimal(df, "lon", ll_dec)
+  df <- format_decimal(df, "lat", ll_dec)
 
   # Format temp, sal and fluor to set decimal lengths
-  df$temp <- format_decimal(df$temp, temp_dec)
-  df$sal <- format_decimal(df$sal, sal_dec)
-  df$fluor <- format_decimal(df$fluor, fluor_dec)
-
+  df <- format_decimal(df, "temp", temp_dec)
+  df <- format_decimal(df, "sal", sal_dec)
+  df <- format_decimal(df, "fluor", fluor_dec)
+  df <- format_decimal(df, "depth", 1)
 
   return(df)
 }
@@ -99,6 +103,30 @@ format_csv_output <- function(df, dttm_format = "%Y-%m-%dT%H:%M", dttm_suffix = 
 #' @export
 #'
 #' @examples
-format_decimal <- function(value, digits) {
-  format(round(value,digits), nsmall = digits)
+format_decimal <- function(df, col_name, digits) {
+
+  if(col_name %in% colnames(df)){
+    df[col_name] <- format(round(df[[col_name]],digits), nsmall = digits)
+  }
+
+  return(df)
+}
+
+
+#' Zone Description to Time Zone
+#'
+#' @param zd
+#'
+#' @return
+#' @export
+#'
+#' @examples
+zd_to_tz <- function(zd) {
+
+  tz <- as.numeric(zd) * -1
+  tz <- as.character(tz)
+  ii <- !stringr::str_sub(tz,1,1) == "-"
+  tz[ii] <- paste0("+", tz[ii])
+
+  return(tz)
 }
