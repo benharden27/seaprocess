@@ -5,7 +5,7 @@
 \title{Create complete data sheet}
 \usage{
 create_datasheet(data_input, summary, data_type = "CTD",
-  csv_output = NULL)
+  csv_output = NULL, elg_input = NULL)
 }
 \arguments{
 \item{summary}{}
