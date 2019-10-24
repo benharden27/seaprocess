@@ -32,9 +32,9 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
   # TODO: find way to store Rdata file in local folder so we don't have the delay of loading
   # TODO: confirm consistency in field names
   if(file_test("-f",elg_input)) {
-    elg <- read_elg(elg_input)
+    elg <- sea::read_elg(elg_input)
   } else {
-    elg <- read_elg_fold(elg_input)
+    elg <- sea::read_elg_fold(elg_input)
   }
 
   # find all the nearest date time values of summary sheet to the elg file and add these indeces
