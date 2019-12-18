@@ -137,9 +137,9 @@ get_elg <- function(elg_input) {
   # TODO: find way to store Rdata file in local folder so we don't have the delay of loading
   # TODO: confirm consistency in field names
   if(file_test("-f",elg_input)) {
-    elg <- sea::read_elg(elg_input)
+    elg <- read_elg(elg_input)
   } else {
-    elg <- sea::read_elg_fold(elg_input)
+    elg <- read_elg_fold(elg_input)
   }
 
   return(elg)
