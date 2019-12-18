@@ -17,10 +17,10 @@
 #'
 read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, zd = NULL) {
 
-  # TODO: Optimize code using pmap from purrr Package
+  # TODO: add in minor interpolation for short gaps of missing values
 
-  # ????
-  if(skip>0) {
+  # collects names if you need to be able to skip data lines
+  if(skip > 0) {
     col_names <- names(readr::read_csv(filein, n_max = 0))
   } else {
     col_names <- TRUE
