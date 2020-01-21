@@ -298,6 +298,7 @@ read_elg_fold <- function(root_folder, sort_elg = TRUE, ...) {
     elg <- NULL
   }
 
+
   return(elg)
 
 }

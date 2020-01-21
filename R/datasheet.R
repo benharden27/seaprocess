@@ -7,7 +7,7 @@
 #' @export
 #'
 #' @examples
-create_datasheet <- function(data_input, summary, data_type = "CTD", csv_output = NULL, elg_input = NULL) {
+create_datasheet <- function(data_input, summary_input, data_type = "CTD", csv_output = NULL, elg_input = NULL) {
 
   # read in the data_input excel sheet datasheet
   data <- readxl::read_excel(data_input)
@@ -15,7 +15,7 @@ create_datasheet <- function(data_input, summary, data_type = "CTD", csv_output 
   # read in station summary datasheet
   # TODO: determine what formating to apply when read in (beyond zd)
   summary <- readr::read_csv(
-    summary,
+    summary_input,
     col_types = readr::cols(
       zd = readr::col_character()
     )
@@ -24,7 +24,7 @@ create_datasheet <- function(data_input, summary, data_type = "CTD", csv_output 
   # filter by data_type
   summary <- dplyr::filter(summary, deployment == data_type)
 
-  data <- dplyr::right_join(summary,data,by="station")
+  data <- dplyr::left_join(summary, data, by="station")
 
   # Neuston specific stuff
   if(data_type == "NT") {

@@ -8,7 +8,7 @@ create_summary(summary_input, elg_input, csv_output = csv_output)
 
 # Create CTD datasheet
 data_input <- "inst/extdata/S285_ctd.xlsx"
-summary <- "inst/extdata/S285_station.csv"
+summary_input <- "inst/extdata/S285_station.csv"
 csv_output <- "inst/extdata/S285_ctd.csv"
 create_datasheet(data_input, summary , csv_output = csv_output, data_type = "CTD")
 
