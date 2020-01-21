@@ -247,43 +247,6 @@ read_cnv_latlon <- function(cnv_file) {
 }
 
 
-#' Read a bottle data file
-#'
-#' @param file
-#'
-#' @return
-#' @export
-#'
-#' @examples
-read_btl <- function(file) {
-
-  btl <- readr::read_lines(file)
-  ii <- stringr::str_which(btl,"Bottle")
-
-  btl <- readr::read_delim(file, " ", skip = ii+1, col_names = F, trim_ws = T)
-
-  btl <- dplyr::filter(btl,rep(c(T,F),nrow(btl)/2))
-
-  btl <- dplyr::mutate(btl, dttm = lubridate::mdy(paste(btl$X2,btl$X3,btl$X4)))
-
-  btl <- dplyr::select(btl,c(1,ncol(btl),5:(ncol(btl)-3)))
-
-  names_btl <- stringr::str_replace_all(read_delim(file, " ", skip = ii-1, n_max = 1,col_names = F,trim_ws = T),"\\W","")
-
-  names(btl) <- names_btl
-
-  btl$Bottle <- readr::parse_double(btl$Bottle)
-
-  btl <- dplyr::arrange(btl,rev(btl$Bottle))
-
-  btl <- dplyr::select(btl,c(1,2,5,6,3,4,7,8))
-
-  file_out <- stringr::str_replace(file,".btl",".csv")
-
-  readr::write_csv(btl,file_out)
-
-}
-
 #' Read and process data from a ROS seabird file
 #'
 #' @param ros_file
@@ -294,26 +257,16 @@ read_btl <- function(file) {
 #' @examples
 read_ros <- function(ros_file) {
 
+  # read ros file using oce package
   ros <- oce::read.ctd(ros_file)
 
-  boti <- unique(ros@data$bottlesFired)
-  output <- tibble::tibble(bottle=boti,
-                           depth = NA,
-                           depth_std = NA,
-                           temp = NA,
-                           temp_std = NA,
-                           sal = NA,
-                           sal_std = NA)
+  # convert data to a tibble
+  ros_df <- tibble::as_tibble(ros@data)
 
-  for (i in boti) {
-    ii <- ros@data$bottlesFired %in% i
-    output$depth[i] <- mean(ros@data$depth[ii], na.rm = T)
-    output$temp[i] <- mean(ros@data$temperature[ii], na.rm = T)
-    output$sal[i] <- mean(ros@data$salinity[ii], na.rm = T)
-    output$depth_std[i] <- sd(ros@data$depth[ii], na.rm = T)
-    output$temp_std[i] <- sd(ros@data$temp[ii], na.rm = T)
-    output$sal_std[i] <- sd(ros@data$sal[ii], na.rm = T)
-  }
+  # group by bottles fired and find the means
+  ros_df <- dplyr::group_by(ros_df, bottlesFired)
+  output <- dplyr::summarize_all(ros_df, list(~mean))
+  output <- dplyr::rename(output, bottle = bottlesFired)
 
   return(output)
 

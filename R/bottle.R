@@ -14,7 +14,7 @@ create_bottle <- function(ctd_file, ros_folder, datasheet_folder = NULL, csv_out
   data <- readr::read_csv(ctd_file, col_types = readr::cols(zd = readr::col_character()))
 
   # then remove all the extra columns we wont need
-
+  data <- dplyr::transmute(data, station, date, time_in, zd, dttm, lon, lat)
 
   # Go find appropriate bottle files from ctd
   # list all files with *.ros extension in ros_folder
@@ -25,7 +25,7 @@ create_bottle <- function(ctd_file, ros_folder, datasheet_folder = NULL, csv_out
     if(length(ros_file)>0) {
 
       # Read in the ros file and arrange in bottle decending order
-      ros <- sea::read_ros(file.path(ros_folder,ros_file))
+      ros <- read_ros(file.path(ros_folder,ros_file))
       ros <- dplyr::arrange(ros, desc(bottle))
 
       # duplicate the ctd info to be the same number of rows

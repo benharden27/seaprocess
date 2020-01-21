@@ -10,7 +10,8 @@ create_summary(summary_input, elg_input, csv_output = csv_output)
 data_input <- "inst/extdata/S285_ctd.xlsx"
 summary_input <- "inst/extdata/S285_station.csv"
 csv_output <- "inst/extdata/S285_ctd.csv"
-create_datasheet(data_input, summary , csv_output = csv_output, data_type = "CTD")
+data_type = "CTD"
+create_datasheet(data_input, summary , csv_output = csv_output, data_type = data_type)
 
 # Create bottle datasheet
 ctd_file <- "inst/extdata/S285_ctd.csv"
@@ -23,4 +24,5 @@ data_input <- "inst/extdata/S285_neuston.xlsx"
 summary <- "inst/extdata/S285_station.csv"
 csv_output <- "inst/extdata/S285_neuston.csv"
 elg_input <- "inst/extdata/S285_elg/"
-create_datasheet(data_input, summary, csv_output = csv_output, data_type = "NT", elg_input = elg_input)
+data_type = "NT"
+create_datasheet(data_input, summary, csv_output = csv_output, data_type = data_type, elg_input = elg_input)
