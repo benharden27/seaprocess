@@ -1,12 +1,39 @@
 #' Create Station Summary Sheet
 #'
-#' This function combines hand-entered station metadata with electronically recorded instrument data to output a well formatted station summary sheet.
+#' This function combines hand-entered station metadata with electronically recorded location and environmental data to output a well formatted station summary sheet.
 #'
 #' @param summary_input The input datasheet that includes the relevent station and deployment metadata
-#' @param elg The cruise elg file or folder or files for extracting continuous data from
+#' @param elg The cruise elg file (or folder of files) for extracting continuous data from
+#' @param csv_output The desired output location for the well-formatted csv file
 #'
-#' @return
+#' @return A tibble containing the combined data frames. If csv_output is set to a valid output path then a formatted csv file is output also.
+#'
 #' @export
+#'
+#' @details
+#' During deployments at SEA, we maintain paper data sheets which recorded station metadata and data from that deployment. These are a vital component for our data accuracy and redundancy.
+#'
+#' In creating electronic datasheets for deployments it is desirable to combine hand-entered station metadata (station number, station type, zone description, etc.) with electronically recorded data (location, surface conditions, etc.) to provide an accurate record of the deployment without the need to re-enter hand-recorded values of the electronic data.
+#'
+#' To do this, [create_summary()] takes in an excel sheet with the bare minimum of hand-entered data:
+#'
+#' * Station number
+#' * Deployment type
+#' * Deployment date/time in (and out)
+#' * Zone description (time zone)
+#'
+#' [create_summary()] combines this data with the electronically recorded "event" data which records (amongst other things):
+#'
+#' * Time
+#' * Location
+#' * Surface Temperature
+#' * Surface Salinity
+#'
+#' The event data is typically stored in a file with an extension elg. [read_elg()] deals with reading this data in and formatting it properly.
+#'
+#' Once the two data frames are read in to R, they are combined using the UTC time that exists in both data frames.
+#'
+#' @md
 #'
 #' @examples
 #' # Create a summary from S285 data input and elgs
@@ -19,13 +46,11 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
   summary <- readxl::read_excel(summary_input, col_types = "text")
 
   # combine date and time and convert to R datatime object using specified time zone
-  summary <- dplyr::mutate(
-    summary,
-    dttm = lubridate::ymd_hm(
-      paste(summary$date,summary$time_in)
-      ) + lubridate::hours(summary$zd)
-    )
-
+  summary <- dplyr::mutate(summary,
+                           dttm = lubridate::ymd_hm(
+                             paste(summary$date,summary$time_in)
+                             ) + lubridate::hours(summary$zd)
+                           )
 
   # Test to see whether elg_input is a file or a folder and read elg file(s) accordingly
   elg <- get_elg(elg_input)
@@ -42,8 +67,24 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
 
   # TODO: add checks to ensure that there are no duplicate deployments for any one station
 
+  # Output to csv file as long as the folder name exists and the extension is correct
   if(!is.null(csv_output)) {
-    readr::write_csv(format_csv_output(summary),csv_output)
+    # find the file extension of csv_output
+    ext <- tools::file_ext(csv_output)
+    # test to see if the extension is csv or CSV
+    if(stringr::str_detect("csv|CSV", ext)) {
+      # test to see if the filename directory is already in existance
+      if(dir.exists(dirname(csv_output))) {
+        # create csv output at csv_output location
+        readr::write_csv(format_csv_output(summary),csv_output)
+      } else {
+        stop("csv_output does not direct towards a valid existing folder")
+      }
+    } else {
+      stop("csv_output must include a filename with a .csv extenstion")
+    }
+  } else {
+    warning("csv_output is empty -- no csv file was created")
   }
 
   return(summary)
@@ -136,10 +177,13 @@ get_elg <- function(elg_input) {
   # TODO: add ability to tune reading elg per options provided in that function
   # TODO: find way to store Rdata file in local folder so we don't have the delay of loading
   # TODO: confirm consistency in field names
+
   if(file_test("-f",elg_input)) {
     elg <- read_elg(elg_input)
-  } else {
+  } else if(file_test("-d",elg_input)) {
     elg <- read_elg_fold(elg_input)
+  } else {
+    stop("elg_input is neither a valid filename or folder")
   }
 
   return(elg)

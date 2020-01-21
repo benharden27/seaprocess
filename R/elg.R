@@ -294,6 +294,7 @@ read_elg_fold <- function(root_folder, sort_elg = TRUE, ...) {
       elg <- dplyr::arrange(elg, dttm)
     }
   } else {
+    stop("No elg files in specified folder.")
     elg <- NULL
   }
 
