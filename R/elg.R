@@ -15,7 +15,7 @@
 #' @examples
 #' read_elg()
 #'
-read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, zd = NULL) {
+read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, csv_output = NULL) {
 
   # TODO: add in minor interpolation for short gaps of missing values
 
@@ -150,6 +150,10 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, zd = NU
   # add column with filename
   file <- tail(stringr::str_split(filein, "/")[[1]],1)
   df <- dplyr::mutate(df, filename = file)
+
+  if(!is.null(csv_output)) {
+    readr::write_csv(data,csv_output, na = "")
+  }
 
   return(df)
 
