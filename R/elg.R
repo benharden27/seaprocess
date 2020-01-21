@@ -26,6 +26,7 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, zd = NU
     col_names <- TRUE
   }
 
+
   # Toggle a preCheck of the elg file for clearly bad lines and commas at end
   if(preCheck) {
 
