@@ -1,4 +1,3 @@
-#TODO if there is not a HC deployment, it does not add a SS line to bottle_sum!
 #TODO creat an 'export to csv' option for ODV input.
 #TODO eliminate the confusion b/t bottle and bottle_sum. Which is from the csv, which is the utility object, and which is the product?
 #TODO make it recognize that all the chl (and future nutrients) are the same variable.

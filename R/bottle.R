@@ -13,11 +13,16 @@ create_bottle <- function(summary_csv, ros_folder, datasheet_folder = NULL, csv_
   # read ctd datasheet summary
   data <- readr::read_csv(summary_csv, col_types = readr::cols(zd = readr::col_character()))
 
-  # then remove all the extra columns we wont need
-  data <- dplyr::transmute(data, station, deployment, date, time_in, zd, dttm, lon, lat)
 
   # filter to just CTD and HC stations
   data_ctd <- dplyr::filter(data, deployment == "CTD" | deployment == "HC")
+<<<<<<< HEAD
+=======
+
+  # then remove all the extra columns we wont need
+  data_ctd <- dplyr::transmute(data_ctd, station, deployment, date, time_in, zd, dttm, lon, lat)
+
+>>>>>>> a18ab8abd98f5e81b15056b72b6649356b95b723
 
   # Go find appropriate bottle files from ctd
   # list all files with *.ros extension in ros_folder
@@ -50,10 +55,18 @@ create_bottle <- function(summary_csv, ros_folder, datasheet_folder = NULL, csv_
   }
 
   # then go find appropriate surface station information - add in and sort
+  data_ss <- dplyr::filter(data, deployment == "SS")
+  data_ss <- rename(data_ss, temperature = temp, salinity = sal, fluorescence = fluor)
+  data_ss <- mutate(data_ss, depth = 0)
+  data_ss <- select(data_ss, -time_out)
 
+
+  #join the SS data with the ros output data
+  output <- dplyr::bind_rows(output, data_ss)
+  output <- dplyr::arrange(output, by = station)
 
   # then go capture output from calcsheets - add in and sort
-
+  test <- read_calc_fold(calc_folder, output, bottle_is_file = FALSE)
 
   # output as csv
   if(!is.null(csv_output)) {
