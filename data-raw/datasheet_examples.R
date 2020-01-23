@@ -19,6 +19,16 @@ ros_folder <- "inst/extdata/S285_ctd/"
 csv_output <- "inst/extdata/S285_bottle.csv"
 create_bottle(ctd_file, ros_folder , csv_output = csv_output)
 
+#Append calculation sheet data to bottle datasheet
+calc_file <- "inst/extdata/Calculation Sheets/CalcChlaNoAcid_0.45_run1.xls"
+bottle_sum <- "inst/extdata/S285_bottle.csv"
+read_calc_sheet(calc_file, bottle_sum)
+
+#Read a folder of calculation sheets, all must contain the 'output' sheet
+calc_folder <- "inst/extdata/Calculation Sheets"
+bottle_sum <- "inst/extdata/S285_bottle.csv"
+bottle_test <- read_calc_fold(calc_folder, bottle_sum)
+
 # Create neuston datasheet
 data_input <- "inst/extdata/S285_neuston.xlsx"
 summary <- "inst/extdata/S285_station.csv"
