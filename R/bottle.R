@@ -17,7 +17,7 @@ create_bottle <- function(summary_csv, ros_folder, datasheet_folder = NULL, csv_
   data <- dplyr::transmute(data, station, deployment, date, time_in, zd, dttm, lon, lat)
 
   # filter to just CTD and HC stations
-  data_ctd <- dplyr::filter(data, deployment = "CTD" | deployment = "HC")
+  data_ctd <- dplyr::filter(data, deployment == "CTD" | deployment == "HC")
 
   # Go find appropriate bottle files from ctd
   # list all files with *.ros extension in ros_folder
