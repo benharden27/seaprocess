@@ -265,7 +265,7 @@ read_ros <- function(ros_file) {
 
   # group by bottles fired and find the means
   ros_df <- dplyr::group_by(ros_df, bottlesFired)
-  output <- dplyr::summarize_all(ros_df, list(~mean))
+  output <- dplyr::summarize_all(ros_df, list(mean))
   output <- dplyr::rename(output, bottle = bottlesFired)
 
   return(output)
