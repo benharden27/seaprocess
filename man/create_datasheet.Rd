@@ -4,11 +4,19 @@
 \alias{create_datasheet}
 \title{Create complete data sheet}
 \usage{
-create_datasheet(data_input, summary_input, data_type = "CTD",
-  csv_output = NULL, elg_input = NULL)
+create_datasheet(
+  data_input,
+  summary_input,
+  data_type = "CTD",
+  csv_output = NULL,
+  elg_input = NULL
+)
 }
 \arguments{
 \item{summary}{}
+}
+\value{
+
 }
 \description{
 Create complete data sheet

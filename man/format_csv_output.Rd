@@ -4,14 +4,23 @@
 \alias{format_csv_output}
 \title{Format for CSV output}
 \usage{
-format_csv_output(df, dttm_format = "\%Y-\%m-\%dT\%H:\%M",
-  dttm_suffix = "Z", ll_dec = 4, temp_dec = 2, sal_dec = 3,
-  fluor_dec = 2)
+format_csv_output(
+  df,
+  dttm_format = "\%Y-\%m-\%dT\%H:\%M",
+  dttm_suffix = "Z",
+  ll_dec = 4,
+  temp_dec = 2,
+  sal_dec = 3,
+  fluor_dec = 2
+)
 }
 \arguments{
 \item{df}{Data frame to be exported}
 
 \item{dttm_format}{dttm_format}
+}
+\value{
+
 }
 \description{
 This is a catch-all function to ensure that everytime a data-frame in this

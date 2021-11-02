@@ -11,6 +11,9 @@ read_ctd_fold(fold, check_vars = TRUE, ...)
 
 \item{...}{}
 }
+\value{
+
+}
 \description{
 Read all CNV files in a folder
 }

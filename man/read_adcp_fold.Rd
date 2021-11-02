@@ -4,12 +4,21 @@
 \alias{read_adcp_fold}
 \title{Read all ADCP Ensemble files in a folder and combine}
 \usage{
-read_adcp_fold(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
-  file_select = NULL, calc_echo_ind = FALSE, combine = TRUE,
-  combine_na = TRUE, sort_dttm = FALSE)
+read_adcp_fold(
+  adcp_fold,
+  file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
+  file_select = NULL,
+  calc_echo_ind = FALSE,
+  combine = TRUE,
+  combine_na = TRUE,
+  sort_dttm = FALSE
+)
 }
 \arguments{
 \item{adcp_fold}{}
+}
+\value{
+
 }
 \description{
 Read all ADCP Ensemble files in a folder and combine

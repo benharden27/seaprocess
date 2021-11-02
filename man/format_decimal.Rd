@@ -9,6 +9,9 @@ format_decimal(df, col_name, digits)
 \arguments{
 \item{digits}{}
 }
+\value{
+
+}
 \description{
 Rather than significant figures as format() provides in its digits = 2 option.
 }

@@ -9,6 +9,9 @@ calc_echo_amp(adcp)
 \arguments{
 \item{adcp}{}
 }
+\value{
+
+}
 \description{
 Props to Ali Della Penna for help with this
 }

@@ -9,6 +9,9 @@ read_ros(ros_file)
 \arguments{
 \item{ros_file}{}
 }
+\value{
+
+}
 \description{
 Read and process data from a ROS seabird file
 }

@@ -11,6 +11,9 @@ create_gps_dttm(gps_time, sys_dttm)
 
 \item{sys_dttm}{system datetime}
 }
+\value{
+
+}
 \description{
 ELG files typically have a GPS time, but no GPS data.
 This function takes the system datetime field already parsed and returns a well formated GPS datetime.

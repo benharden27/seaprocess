@@ -9,6 +9,9 @@ read_elg_fold(root_folder, sort_elg = TRUE, ...)
 \arguments{
 \item{root_folder}{}
 }
+\value{
+
+}
 \description{
 Read multiple ELG files from a folder
 }

@@ -61,7 +61,7 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
   ii <- find_near(elg$dttm, summary$dttm)
 
   # extract these values and add to the right of summary
-  # TODO: make the ourpurs selectable when you run the function
+  # TODO: make the ourputs selectible when you run the function
   elg_to_add <- dplyr::select(elg[ii,], lon, lat, temp, sal, fluor)
   summary <- dplyr::bind_cols(summary,elg_to_add)
 
@@ -94,7 +94,7 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL) {
 #' Format for CSV output
 #'
 #' This is a catch-all function to ensure that everytime a data-frame in this
-#' software is exported to a csv that certain fields are formated correctly
+#' software is exported to a csv that certain fields are formatted correctly
 #'
 #' @param df Data frame to be exported
 #' @param dttm_format dttm_format

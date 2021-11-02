@@ -4,8 +4,7 @@
 \alias{read_elg}
 \title{Read in SEA data an ELG event file and return a well formatted output}
 \usage{
-read_elg(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
-  csv_output = NULL)
+read_elg(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, csv_output = NULL)
 }
 \arguments{
 \item{filein}{.elg file to be read in}

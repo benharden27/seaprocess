@@ -15,6 +15,9 @@ read_ctd(cnv_file, pmin = 5, p = 1, ...)
 
 \item{...}{additional arguments passed to called functions}
 }
+\value{
+
+}
 \description{
 Wrapper function for oce functions read.ctd, ctdTrim, and ctdDecimate.
 Extracts and adds metadata from header that is unique to SEA headers.

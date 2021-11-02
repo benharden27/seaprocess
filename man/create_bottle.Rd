@@ -4,11 +4,18 @@
 \alias{create_bottle}
 \title{Create bottle file sheet}
 \usage{
-create_bottle(summary_csv, ros_folder, datasheet_folder = NULL,
-  csv_output = NULL)
+create_bottle(
+  summary_csv,
+  ros_folder,
+  datasheet_folder = NULL,
+  csv_output = NULL
+)
 }
 \arguments{
 \item{datasheet_folder}{}
+}
+\value{
+
 }
 \description{
 Create bottle file sheet

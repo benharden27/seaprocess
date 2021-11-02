@@ -1,0 +1,164 @@
+---
+title: "Introduction to seaprocess"
+author: Ben Harden
+date: lubridate::today()
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{seaprocess}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(seaprocess)
+```
+
+# Introduction
+
+This vignette is an overview of the seaprocess package and what it does to process data collected aboard the Sea Education Association's Sailing School Vessels the Corwith Cramer and the Robert C. Seamans.
+
+The goals of this package are to:
+
+- Provide a robust set of customizable tools that can handle the processing of raw input data to usable and archive data formats
+- To document the process for others interested in how SEA processes it's data
+- To simplify many of SEA's historic data processing routines.
+
+## OVERVIEW PROCESS DIAGRAM
+
+# Continuous data streams
+
+## Cruise Track and Surface data
+
+## ADCP
+
+# Station data streams
+
+Many data on SEA cruises are collected at discrete station locations. We stop (or partially stop) the ship at a location to, for example, take CTD measurements, water samples or tow nets. We will refer to the data collected during these activities as station data for the purposes of this document.
+
+Station data is a combination of data recorded manually, data recorded by some device (i.e. CTD) and metadata of the time, location, and other environmental parameters. All of these data are recorded on a paper data sheet, but the goal of this portion of the computer data processing is to limit the amount of metadata that we need to input into the computer that is already being recorded digitally elsewhere.
+
+## Overall justfication and flow
+
+SKETCH PROCESS
+
+## Station summary sheet
+
+The starting point for all of this is to create an accurate station summary sheet. This will include information for each station including:
+
+- Time and Date
+- Location
+- Environmental parameters recorded by system (surface temperature, salinity, fluoroesence. etc., and wind conditions)
+- Types of deployments undertaken
+
+Once we've created this table, we can then use the metadata to populate specific data sheets for the individual deployments using only the bare minimum of hand-entered data. This might include sensor IDs for a CTD cast or the 100 count values for a nueston tow.
+
+### Setting up the intial Excel Sheet
+
+We begin creating a station summary sheet by using an Excel spreadsheet with the following column headers:
+
+ADD SCREEN GRAB
+
+- station: Station number using format C/SXXX-YYY where C/S designate Cramer or Seamans, XXX is the three-digit cruise ID, and YYY is a three-digit station number (e.g. 005)
+- deployment: A shortcode for the type of deployment undertaken (see appendix)
+- date: Local date of deployment in format YYYY-MM-DD
+- time_in: Local time of deployment in format (HH:MM)
+- time_out: Local time of recovery (if important for deployment - i.e. neuston tow) - note this could be on a different date, but the background code accounts for this as long as the deployment date is correct for time_in
+- zd: The zone description of the deployment to be able to convert local time to UTC
+
+NOTE: There is a new line on the sheet for every deployment type at every station so as to make use of the actual time of deployment in finding the location (see below). An example of this can be seen here.
+
+```{r, echo = FALSE}
+knitr::kable(readxl::read_excel(system.file("extdata", "S285_station.xlsx", package="seaprocess"), col_types = "text"))
+```
+
+### Combining with continuous data
+
+The next step is to match up the time of deployment with the location and environmental data recorded by SCS to populate the rest of the summary sheet with electronically recorded metadata.
+
+This is acheived using the `create_summary()` function. Create summary takes in the following inputs:
+
+- summary_input: the file location of the Excel sheet we've just made above
+- elg_input: either the file location of the cruise .elg file, OR a folder location containing all elg files for the cruise, OR an R data frame containing the event data already read-in by `read_elg()`
+- csv_output: An optional argument to specify if a CSV file should be created as output.
+
+With these inputs, the function reads in the elg information, looks at all the dates/times of the deployments, and find the matching location and environmental metadata to add to the station summary. The result is a table that looks the same as the input station Excel sheet, but with aditional columns of:
+
+- dttm: Date and time in UTC.
+- lon: Longitude of the deployment in degrees east (-180 to 180)
+- lat: Latitude of the deployment in degreees north (-90 to 90)
+- temp: Surface ocean temperature (°C)
+- sal: Surface ocean salinity
+- fluor: Surface ocean fluoroesence
+
+An example of these code in action and the output can be seen here.
+
+```{r, message = FALSE, warning = FALSE}
+summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
+elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
+summary <- create_summary(summary_input, elg_input)
+```
+
+```{r, echo = FALSE}
+knitr::kable(summary)
+```
+ADD IN CODE AND DESCRIPTION OF FAIL SAFES IF THE ELG DATA IS NOT AVAILABLE
+
+To move on to populating specific datasheets with this station summary data, we need to save this station summary to a CSV file which we can do by including a file path for the `csv_output` argument. In this case, you wouldn't need to then assign the output of the function to some object (in our case `summary`) unless you needed this object for something.
+
+```{r, eval=FALSE}
+create_summary(summary_input, elg_input, "<some-path-to-folder>/<C/SXXX>_station_summary.csv")
+```
+
+## Other basic data sheets
+
+We can now employ a mostly universal concept of taking any deployment (even a non-standard, cruise specific one), creating a Excel sheet with station number and any hand-entered data, and then adding in the relevent station summary data from the CSV we've just created.
+
+To do this we use the `create_datasheet()` function which takes in the following main arguments:
+
+- data_input: The filepath of the Excel data sheet witih minimal hand-entered data
+- summary_input: The filepath of the CSV station summary sheet
+- data_type: a string that specifies the type of data (e.g. "CTD") - IS THIS REDUNDENT, can we guess...??
+
+For example, with CTD data, our initial Excel datasheet looks like this:
+
+```{r, echo = FALSE}
+knitr::kable(readxl::read_excel(system.file("extdata", "S285_ctd.xlsx", package="seaprocess"), col_types = "text"))
+```
+
+You can see that there is no info on location, timing, etc. but we have that all stored away elsewhere. All we need is to bring it together like this:
+
+```{r}
+data_input <- system.file("extdata", "S285_ctd.xlsx", package="seaprocess")
+summary_input <- system.file("extdata", "S285_station.csv", package="seaprocess")
+data_type = "CTD"
+datasheet <- create_datasheet(data_input, summary_input, data_type)
+```
+
+```{r}
+knitr::kable(datasheet)
+```
+
+Behind the scenes, the code is simply reading in both files, matching up the deployment number and type and copying the appropriate metadata to the data sheet.
+
+To get a working copy of this data, you can export it as a csv file, just like in the station summary example above
+
+```{r, eval=FALSE}
+create_datasheet(data_input, summary_input, data_type, "<some-path-to-folder>/<C/SXXX>_ctd.csv"")
+```
+
+### Neuston caveat
+
+There is one additional (well, more right now) Neuston datasheet step which is to also calculate the biodensity of the tow by dividing the biovolume of zooplankton by the tow length.
+
+## Bottle datasheet
+
+Included as it's own section because of the complexity of what is involved here. Not only are there hand entered data to combine with summary metadata, there is also chemical analysis of collected water which also needs to be incorporated too.
+
+The solution right now is to have calculation sheets which look very similar to the traditional SEA ones. I.e. a series of sheets that you use to build up from calibration curves to final outcomes. The key to our process is that each Excel workbook has a sheet called "output", which is what our function will go looking for in order to incorporate the data

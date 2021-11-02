@@ -9,6 +9,9 @@ parse_field(df, regex, parse_fun, ...)
 \arguments{
 \item{...}{}
 }
+\value{
+
+}
 \description{
 Returns tibble with found column parsed and formatted
 }

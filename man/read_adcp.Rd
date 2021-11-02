@@ -11,6 +11,9 @@ read_adcp(adcp_file, calc_echo = FALSE)
 
 \item{calc_echo}{Whether or not to calculate the echo intensity from the backscatter}
 }
+\value{
+
+}
 \description{
 Read in a RDI Acoustic Current Dopler Current Profiler ensemble file with
 extension .ENS, .ENR, .ENX, .STA, or .LTA.

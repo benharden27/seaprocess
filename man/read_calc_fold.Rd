@@ -13,6 +13,9 @@ read_calc_fold(calc_folder, bottle_sum, bottle_is_file = TRUE)
 
 \item{bottle_is_file}{#if TRUE (the default) this will read the [bottle.csv] file and creat the [bottle_sum] object. If FALSE, it will append data to the bottle object.}
 }
+\value{
+
+}
 \description{
 This function reads the [output] sheet of every excel file in a folder and appends the new values to the bottle summary object [bottle_sum].
 }
