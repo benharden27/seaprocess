@@ -1,5 +1,4 @@
-#TODO creat an 'export to csv' option for ODV input.
-#TODO eliminate the confusion b/t bottle and bottle_sum. Which is from the csv, which is the utility object, and which is the product?
+#TODO eliminate the confusion b/t bottle , bottle2, and bottle_sum. Which is from the csv, which is the utility object, and which is the product?
 #TODO make it recognize that all the chl (and future nutrients) are the same variable.
 
 #' Append calculation sheet data to bottle summary
@@ -35,9 +34,16 @@ read_calc_sheet <- function(calc_file, bottle_sum, bottle_is_file = FALSE) {
   #TODO Make it read the bottle collum, even if there are -, blanks or NA, N/A etc. Anything thats not a number is a SS and gets NA
 
 
+  #if the column names contain "filter" (eg. it is a chlorophyll sheet), then make each filter size its own column with the chl values.
+  if(c("filter") %in% colnames(calc_sheet)) {
+    calc_sheet <-  pivot_wider(calc_sheet, names_from = "filter size", values_from = "chl")}
+
+
   #if bottle_is_file = TRUE, create an object 'bottle' from the bottle.csv. If FALSE (default), load the object 'bottle_sum'
   if(bottle_is_file == TRUE) {
     bottle <-  readr::read_csv(bottle_sum)
+
+
 
   } else{
     bottle <- bottle_sum
@@ -52,7 +58,7 @@ read_calc_sheet <- function(calc_file, bottle_sum, bottle_is_file = FALSE) {
 }
 
 
-#'#Read a folder of calculation sheets, and append the data to bottle summary
+#'#Read a folder of calculation sheets, and append the data to the bottle summary
 #'
 #'This function reads the [output] sheet of every excel file in a folder and appends the new values to the bottle summary object [bottle_sum].
 #'
@@ -95,4 +101,7 @@ read_calc_fold <- function(calc_folder, bottle_sum, bottle_is_file = TRUE) {
     calc <- NULL
   }
   return(bottle)
+
+  #should we make this auto-output a CSV file?
+
 }
