@@ -364,6 +364,8 @@ average_elg <- function(data, average_window = 60) {
   data_out <- dplyr::mutate(data_out, dttm = roundtime, .before=1)
   data_out <- dplyr::select(data_out, -roundtime)
 
+  # TODO need clause to test for crossing the antimeridian where the hourly average will be odd
+  # could test for this before the averaging and then change back after
 
   return(data_out)
 
