@@ -1,15 +1,16 @@
-# Series of functions that work to read in an event data file from SEA's archive
+# Series of functions that work to read in an event data file
 
-#' Read in SEA data an ELG event file and return a well formatted output
+#' Read in SEA data from an ELG event file and return a well formatted output
 #'
 #' SEA event files contain output from a number of instruments
 #' including GPS, flow-through, chirp, etc.
 #'
-#' @param filein .elg file to be read in
+#' @param filein Filepath of the elg file to be read in
 #' @param forceGPS option to force the longitude, latitude and time to come from one
-#'  or other of the GPS feeds
-#' @param preCheck logical to do an initial check of lines to remove any standard issues
+#'  or other of the GPS feeds.
+#' @param preCheck option to do an initial check of lines to remove any standard issues
 #' @param skip number of lines to skip below header
+#' @param csv_output optional path to export the processed data to a csv file
 #' @keywords
 #' @export
 #' @examples
@@ -56,7 +57,7 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, csv_out
 
   }
 
-  # Reasign names that have dashes in them to be referenced more easily
+  # Reassign names that have dashes in them to be referenced more easily
   names(df) <- stringr::str_replace_all(names(df),"-",".")
 
   # Construct a data frame of regular expressions and functions used to match col names
@@ -186,7 +187,9 @@ parse_lon <- function(lonin) {
 #' parse_lat()
 #'
 parse_lat <- function(latin) {
+
   return(parse_latlon(latin, var = "lat"))
+
 }
 
 #' Parse lon and lat strings
@@ -238,11 +241,10 @@ parse_latlon <- function(varin, var = "lon") {
 #'
 #' Returns tibble with found column parsed and formatted
 #'
-#' @param df
-#' @param regex
-#' @param name
-#' @param parse_fun
-#' @param ...
+#' @param df input data frame containing column to format
+#' @param regex regular expression to locate column name
+#' @param parse_fun function to use in parsing data in function
+#' @param ... optional arguments to be passed to parse_fun
 #'
 #' @return
 #' @export
@@ -338,3 +340,38 @@ create_gps_dttm <- function(gps_time, sys_dttm) {
   }
   return(gps_dttm)
 }
+
+#' Average time series data
+#'
+#' @param data
+#' @param average_window
+#'
+#' @return
+#' @export
+#'
+#' @examples
+average_elg <- function(data, average_window = 60) {
+
+  if(average_window<2) {
+    warning("Cannot average data to window smaller than 2 minutues - returning original data")
+    return(data)
+  }
+
+  data <- dplyr::mutate(data, roundtime = lubridate::round_date(dttm, unit = paste(average_window,"minute")))
+  data <- dplyr::group_by(data, roundtime)
+  data_out <- dplyr::summarise(data, dplyr::across(tidyselect::vars_select_helpers$where(is.numeric), ~mean(.x, na.rm = TRUE)))
+
+  data_out <- dplyr::mutate(data_out, dttm = roundtime, .before=1)
+  data_out <- dplyr::select(data_out, -roundtime)
+
+
+  return(data_out)
+
+}
+
+
+##|
+# tidyselect::vars_select_helpers$where(lubridate::is.Date) |
+#   tidyselect::vars_select_helpers$where(lubridate::is.POSIXct) |
+#   tidyselect::vars_select_helpers$where(lubridate::is.difftime),
+
