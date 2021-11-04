@@ -13,7 +13,8 @@ create_datasheet(
 )
 }
 \arguments{
-\item{summary}{}
+\item{summary}{This function reads in a hand-entered excel sheet along with the summary CSV and produces a well formated CSV with all the relevent data
+and meta data.}
 }
 \value{
 

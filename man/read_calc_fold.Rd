@@ -2,7 +2,7 @@
 % Please edit documentation in R/calcsheet.R
 \name{read_calc_fold}
 \alias{read_calc_fold}
-\title{#Read a folder of calculation sheets, and append the data to bottle summary}
+\title{#Read a folder of calculation sheets, and append the data to the bottle summary}
 \usage{
 read_calc_fold(calc_folder, bottle_sum, bottle_is_file = TRUE)
 }

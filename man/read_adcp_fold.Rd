@@ -8,7 +8,7 @@ read_adcp_fold(
   adcp_fold,
   file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
   file_select = NULL,
-  calc_echo_ind = FALSE,
+  calc_echo = FALSE,
   combine = TRUE,
   combine_na = TRUE,
   sort_dttm = FALSE

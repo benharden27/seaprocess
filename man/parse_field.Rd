@@ -7,7 +7,13 @@
 parse_field(df, regex, parse_fun, ...)
 }
 \arguments{
-\item{...}{}
+\item{df}{input data frame containing column to format}
+
+\item{regex}{regular expression to locate column name}
+
+\item{parse_fun}{function to use in parsing data in function}
+
+\item{...}{optional arguments to be passed to parse_fun}
 }
 \value{
 

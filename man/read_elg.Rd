@@ -2,19 +2,21 @@
 % Please edit documentation in R/elg.R
 \name{read_elg}
 \alias{read_elg}
-\title{Read in SEA data an ELG event file and return a well formatted output}
+\title{Read in SEA data from an ELG event file and return a well formatted output}
 \usage{
 read_elg(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, csv_output = NULL)
 }
 \arguments{
-\item{filein}{.elg file to be read in}
+\item{filein}{Filepath of the elg file to be read in}
 
 \item{forceGPS}{option to force the longitude, latitude and time to come from one
-or other of the GPS feeds}
+or other of the GPS feeds.}
 
-\item{preCheck}{logical to do an initial check of lines to remove any standard issues}
+\item{preCheck}{option to do an initial check of lines to remove any standard issues}
 
 \item{skip}{number of lines to skip below header}
+
+\item{csv_output}{optional path to export the processed data to a csv file}
 }
 \description{
 SEA event files contain output from a number of instruments
