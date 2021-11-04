@@ -63,6 +63,25 @@ format_odv <- function(data,folder,
 }
 
 
+#' Write formatted data to odv txt file
+#'
+#' @param data
+#' @param odv_output
+#'
+#' @return
+#' @export
+#'
+#' @examples
+write_odv <- function(odv_out, output_odv = NULL) {
+  if(!is.null(output_odv)) {
+    output <- safely(readr::write_tsv)(odv_out,output_odv)
+    if(!is.null(output$error)) {
+      warning("Couldn't export the data to a odv file. Most likely specified directory doesn't exist")
+    }
+  } else {
+    warning("No file written - No output odv file specified")
+  }
+}
 
 #' Import a txt file to ODV
 #'
@@ -89,7 +108,7 @@ import_odv <- function(odv_txt) {
 #' @export
 #'
 #' @examples
-format_adcp_odv <- function(data,file,cruiseID = NULL) {
+format_adcp_odv <- function(data, output_odv, cruiseID = NULL) {
 
   # Try and determine the name of the cruise from the data input if not specified. If not, assign "unknown".
   if(is.null(cruiseID)) {
@@ -99,33 +118,28 @@ format_adcp_odv <- function(data,file,cruiseID = NULL) {
     }
   }
 
-  # Convert from sea structure to get the adcp part
-  if(is_sea_struct(data)){
-    data <- data$adcp
-  }
-
   nc <- dim(data$u)[2]
   spdir <- uv_to_wswd(data$u,data$v)
 
   odv_out <- tibble::tibble(
     Cruise = cruiseID,
-    Station = rep_each(1:dim(data$u)[1], nc),
+    Station = rep(1:dim(data$u)[1], each = nc),
     Type = "C",
-    `mon/day/yr` = rep_each(format(data$dttm,"%m/%d/%Y"), nc),
-    `Lon [degrees_east]` = rep_each(data$lon, nc),
-    `Lat [degrees_north]` = rep_each(data$lat, nc),
+    `mon/day/yr` = rep(format(data$dttm,"%m/%d/%Y"), each = nc),
+    `Lon [degrees_east]` = rep(data$lon, each = nc),
+    `Lat [degrees_north]` = rep(data$lat, each = nc),
     `Bot. Depth [m]` = " ",
     `Depth [m]` = rep(data$d, dim(data$u)[1]),
     `Echo Amplitude [counts]` = as.vector(t(data$backscat)),
     `East Component [mm/s]` = as.vector(t(data$u)) * 1000,
     `North Component [mm/s]` = as.vector(t(data$v)) * 1000,
-    `Magnitude [mm/s]` = as.vector(t(spdir[[1]])) * 1000,
-    `Direction [deg]` = as.vector(t(spdir[[2]])),
+    `Magnitude [mm/s]` = as.vector(t(spdir$ws)) * 1000,
+    `Direction [deg]` = as.vector(t(spdir$wd)),
     Ensemble = 0,
-    `hh:mm` = rep_each(format(data$dttm,"%H:%M"), nc)
+    `hh:mm` = rep(format(data$dttm,"%H:%M"), each = nc)
   )
 
-  readr::write_tsv(odv_out,file)
+  write_odv(odv_out, output_odv)
 
   return(odv_out)
 
@@ -197,7 +211,7 @@ format_ctd_odv <- function(data,file,cruiseID = NULL) {
 #' @export
 #'
 #' @examples
-format_hourly_odv <- function(data,file,cruiseID = NULL) {
+format_elg_odv <- function(data, output_odv = NULL ,cruiseID = NULL) {
 
   # Try and determine the name of the cruise from the data input if not specified. If not, assign "unknown".
   if(is.null(cruiseID)) {
@@ -205,11 +219,6 @@ format_hourly_odv <- function(data,file,cruiseID = NULL) {
     if(!stringr::str_detect(stringr::str_sub(cruiseID,1,1),"[C|S|c|s]")) {
       cruiseID = "unknown"
     }
-  }
-
-  # Convert from sea structure to get the hourly part
-  if(is_sea_struct(data)){
-    data <- data$hourly
   }
 
   odv_out <- tibble::tibble(
@@ -227,13 +236,13 @@ format_hourly_odv <- function(data,file,cruiseID = NULL) {
     `hh:mm` = format(data$dttm,"%H:%M"),
     `Wind Speed [knots]` = data$wind_sp,
     `Wind Direction [deg]` = data$wind_dir,
-    `Wind-E/W Comp. [m/s]` = 0,
-    `Wind-N/S Comp. [m/s]` = 0,
-    `CDOM 1 min Avg` = data$cdom_1min,
-    `Xmiss 1 min Avg` = data$xmiss_1min
+    `Wind-E/W Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$u,
+    `Wind-N/S Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$v,
+    `CDOM` = data$cdom_1min,
+    `Xmiss` = data$xmiss_1min
   )
 
-  readr::write_tsv(odv_out,file)
+  write_odv(odv_out, output_odv)
 
   return(odv_out)
 

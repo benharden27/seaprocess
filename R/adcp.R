@@ -103,7 +103,7 @@ read_adcp <- function(adcp_file, calc_echo = FALSE) {
 #'
 #' @examples
 read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
-                               file_select = NULL, calc_echo_ind = FALSE,
+                               file_select = NULL, calc_echo = FALSE,
                                combine = TRUE, combine_na = TRUE, sort_dttm = FALSE) {
 
   files <- list.files(adcp_fold,file_type)
@@ -114,7 +114,7 @@ read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
   adcp_in = NULL
   for (i in 1:length(files)) {
     file <- file.path(adcp_fold,files[i])
-    adcp_in[[i]] <- read_adcp_ens(file, calc_echo = calc_echo_ind)
+    adcp_in[[i]] <- read_adcp(file, calc_echo = calc_echo)
   }
 
 
@@ -161,7 +161,7 @@ read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
         adcp_out$backscat <- rbind(adcp_out$backscat,com_mat,adcp_add$backscat)
         adcp_out$quality <- rbind(adcp_out$quality,com_mat,adcp_add$quality)
         adcp_out$percent <- rbind(adcp_out$percent,com_mat,adcp_add$percent)
-        if(calc_echo_ind == TRUE) {
+        if(calc_echo == TRUE) {
           adcp_out$Idb <- rbind(adcp_out$Idb,com_mat,adcp_add$Idb)
         }
 
@@ -177,7 +177,7 @@ read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
       sorti <- order(adcp_out$dttm)
       adcp_out$u <- adcp_out$u[sorti, ]
       adcp_out$v <- adcp_out$v[sorti, ]
-      if(calc_echo_ind == TRUE) {
+      if(calc_echo == TRUE) {
         adcp_out$Idb <- adcp_out$Idb[sorti, ]
       }
       adcp_out$backscat <- adcp_out$backscat[sorti, ]
@@ -190,7 +190,7 @@ read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
       adcp_out$sound_speed <- adcp_out$sound_speed[sorti]
     }
 
-    if(calc_echo_ind == FALSE)
+    if(calc_echo == FALSE)
       adcp_out <- calc_echo_amp(adcp_out)
 
     return(adcp_out)
@@ -198,6 +198,59 @@ read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
   } else {
     return(adcp_in)
   }
+}
+
+
+
+#' Interpolate an adcp field to different depths
+#'
+#' @param adcp
+#' @param dvec
+#' @param vars
+#'
+#' @return
+#' @export
+#'
+#' @examples
+interp_adcp <- function(adcp,dvec,vars = c("u","v","Idb","backscat","quality","percent")) {
+
+  # Create empty output object
+  output <- NULL
+
+  lenv <- dim(adcp[["u"]])[1]
+  if(is.null(lenv)) {
+    return(NULL)
+  }
+
+  for (var in vars) {
+
+    out <- array(NA,c(lenv,length(dvec)))
+    for (i in 1:lenv) {
+      goodi <- !is.na(adcp[[var]][i,])
+      if(sum(goodi)<2) {
+        next
+      } else {
+        if(abs(min(adcp$d[goodi])-min(dvec))<10) {
+          rule = 2:1
+        } else {
+          rule <- 1
+        }
+        out[i, ] <- approx(adcp$d[goodi],adcp[[var]][i,goodi],dvec,rule=rule)$y
+      }
+    }
+    output[[var]] <- out
+  }
+
+  output[["lon"]] <- adcp[["lon"]]
+  output[["lat"]] <- adcp[["lat"]]
+  output[["dttm"]] <- adcp[["dttm"]]
+  output[["temp"]] <- adcp[["temp"]]
+  output[["sound_speed"]] <- adcp[["sound_speed"]]
+  output[["d"]] <- dvec
+
+  return(output)
+
+
 }
 
 
