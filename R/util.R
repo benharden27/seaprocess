@@ -57,7 +57,7 @@ uv_to_wswd <- function(u,v) {
   wd <- 90 - atan2(v,u)*180/pi
   wd[wd<0&!is.na(wd)] <- wd[wd<0&!is.na(wd)] + 360
 
-  out <- tibble::tibble(ws = ws, wd = wd)
+  out <- list(ws = ws, wd = wd)
 
   return(out)
 }
