@@ -61,3 +61,5 @@ uv_to_wswd <- function(u,v) {
 
   return(out)
 }
+
+DIM <- function(x) if(is.null(dim(x))) length(x) else dim(x)
