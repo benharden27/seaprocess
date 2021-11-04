@@ -13,7 +13,7 @@
 #' @return
 #' @export
 #'
-read_adcp <- function(adcp_file, calc_echo = FALSE) {
+read_adcp <- function(adcp_file, calc_echo = FALSE, to_tibble = TRUE) {
 
   # Read the ensemble file using the oce package
   adcp <- oce::read.adp(adcp_file)
@@ -84,9 +84,16 @@ read_adcp <- function(adcp_file, calc_echo = FALSE) {
                lon = lon[goodi], lat = lat[goodi], dttm = dttm[goodi], d = d,
                temp = temp[goodi], sound_speed = sound_speed[goodi])
 
+
   # calculate the echo intensity
-  if(calc_echo)
+  if(calc_echo) {
     adcp <- calc_echo_amp(adcp)
+  }
+
+  if(to_tibble) {
+    print(adcp_file)
+    adcp <- adcp_to_tibble(adcp)
+  }
 
   # return the adcp object
   return(adcp)
@@ -104,100 +111,128 @@ read_adcp <- function(adcp_file, calc_echo = FALSE) {
 #' @examples
 read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
                                file_select = NULL, calc_echo = FALSE,
-                               combine = TRUE, combine_na = TRUE, sort_dttm = FALSE) {
+                               combine = FALSE, combine_na = TRUE, sort_dttm = FALSE, ...) {
 
   files <- list.files(adcp_fold,file_type)
 
   if(!is.null(file_select))
     files <- files[select]
 
-  adcp_in = NULL
+  adcp = NULL
   for (i in 1:length(files)) {
-    file <- file.path(adcp_fold,files[i])
-    adcp_in[[i]] <- read_adcp(file, calc_echo = calc_echo)
-  }
 
+    adcp_add <- read_adcp(file.path(adcp_fold,files[i]), calc_echo = calc_echo, ...)
 
-
-  if(combine) {
-    # find the longest depth vector in the adcp options and assign to dvec
-    maxd <- rep(NA,length(adcp_in))
-    for (i in 1:length(adcp_in)) {
-      maxd[i] <- length(adcp_in[[i]]$d)
+    if(is.null(adcp_add)) {
+      warning(paste("CTD in file", files[i], "was not added to complete data"))
+      next
     }
-    ii <- which.max(maxd)
-    dvec <- adcp_in[[ii]]$d
 
-    # loop through adcp objects, interpolate and combine
-    for (i in 1:length(adcp_in)) {
+    # check if the conversion to tibble should happen (default TRUE)
+    if(tibble::is_tibble(adcp_add)) {
 
-      if (i == 1) {
-        if(i == ii) {
-          adcp_out <- adcp_in[[i]]
-        } else {
-          adcp_out <- interp_adcp(adcp_in[[i]],dvec)
-        }
+      # add a column for filename
+      adcp_add <- dplyr::mutate(adcp_add, file = files[i])
 
+      # check to see if this is the first file to be added
+      # otherwise bind to previous data
+      if(is.null(adcp)) {
+        adcp <- adcp_add
       } else {
+        adcp <- dplyr::bind_rows(adcp, adcp_add)
+      }
 
-        if(i == ii) {
-          adcp_add <- adcp_in[[i]]
-        } else {
-          adcp_add <- interp_adcp(adcp_in[[i]],dvec)
-          if(is.null(adcp_add)) {
-            next
+      # option to keep the ctds as a list
+      # (for troubleshooting - this should not be for default data processing)
+    } else {
+      if(!is.null(adcp_add)) {
+        adcp <- append(adcp,adcp_add)
+      }
+    }
+
+      if(combine) {
+        # find the longest depth vector in the adcp options and assign to dvec
+        maxd <- rep(NA,length(adcp_in))
+        for (i in 1:length(adcp_in)) {
+          maxd[i] <- length(adcp_in[[i]]$d)
+        }
+        ii <- which.max(maxd)
+        dvec <- adcp_in[[ii]]$d
+
+        # loop through adcp objects, interpolate and combine
+        for (i in 1:length(adcp_in)) {
+
+          if (i == 1) {
+            if(i == ii) {
+              adcp_out <- adcp_in[[i]]
+            } else {
+              adcp_out <- interp_adcp(adcp_in[[i]],dvec)
+            }
+
+          } else {
+
+            if(i == ii) {
+              adcp_add <- adcp_in[[i]]
+            } else {
+              adcp_add <- interp_adcp(adcp_in[[i]],dvec)
+              if(is.null(adcp_add)) {
+                next
+              }
+            }
+
+            if(combine_na == T) {
+              com <- NA
+              com_mat <- matrix(NA,1,length(dvec))
+            } else {
+              com <- NULL
+              com_mat <- NULL
+            }
+            adcp_out$u <- rbind(adcp_out$u,com_mat,adcp_add$u)
+            adcp_out$v <- rbind(adcp_out$v,com_mat,adcp_add$v)
+            adcp_out$backscat <- rbind(adcp_out$backscat,com_mat,adcp_add$backscat)
+            adcp_out$quality <- rbind(adcp_out$quality,com_mat,adcp_add$quality)
+            adcp_out$percent <- rbind(adcp_out$percent,com_mat,adcp_add$percent)
+            if(calc_echo == TRUE) {
+              adcp_out$Idb <- rbind(adcp_out$Idb,com_mat,adcp_add$Idb)
+            }
+
+            adcp_out$lon <- c(adcp_out$lon,com,adcp_add$lon)
+            adcp_out$lat <- c(adcp_out$lat,com,adcp_add$lat)
+            adcp_out$dttm <- c(adcp_out$dttm,mean(c(tail(adcp_out$dttm,1),head(adcp_add$dttm,1)),na.rm=T),adcp_add$dttm)
+            adcp_out$temp <- c(adcp_out$temp,com,adcp_add$temp)
+            adcp_out$sound_speed <- c(adcp_out$sound_speed,com,adcp_add$sound_speed)
           }
         }
 
-        if(combine_na == T) {
-          com <- NA
-          com_mat <- matrix(NA,1,length(dvec))
-        } else {
-          com <- NULL
-          com_mat <- NULL
+        if(sort_dttm) {
+          sorti <- order(adcp_out$dttm)
+          adcp_out$u <- adcp_out$u[sorti, ]
+          adcp_out$v <- adcp_out$v[sorti, ]
+          if(calc_echo == TRUE) {
+            adcp_out$Idb <- adcp_out$Idb[sorti, ]
+          }
+          adcp_out$backscat <- adcp_out$backscat[sorti, ]
+          adcp_out$quality <- adcp_out$quality[sorti, ]
+          adcp_out$percent <- adcp_out$percent[sorti, ]
+          adcp_out$lon <- adcp_out$lon[sorti]
+          adcp_out$lat <- adcp_out$lat[sorti]
+          adcp_out$dttm <- adcp_out$dttm[sorti]
+          adcp_out$temp <- adcp_out$temp[sorti]
+          adcp_out$sound_speed <- adcp_out$sound_speed[sorti]
         }
-        adcp_out$u <- rbind(adcp_out$u,com_mat,adcp_add$u)
-        adcp_out$v <- rbind(adcp_out$v,com_mat,adcp_add$v)
-        adcp_out$backscat <- rbind(adcp_out$backscat,com_mat,adcp_add$backscat)
-        adcp_out$quality <- rbind(adcp_out$quality,com_mat,adcp_add$quality)
-        adcp_out$percent <- rbind(adcp_out$percent,com_mat,adcp_add$percent)
-        if(calc_echo == TRUE) {
-          adcp_out$Idb <- rbind(adcp_out$Idb,com_mat,adcp_add$Idb)
-        }
 
-        adcp_out$lon <- c(adcp_out$lon,com,adcp_add$lon)
-        adcp_out$lat <- c(adcp_out$lat,com,adcp_add$lat)
-        adcp_out$dttm <- c(adcp_out$dttm,mean(c(tail(adcp_out$dttm,1),head(adcp_add$dttm,1)),na.rm=T),adcp_add$dttm)
-        adcp_out$temp <- c(adcp_out$temp,com,adcp_add$temp)
-        adcp_out$sound_speed <- c(adcp_out$sound_speed,com,adcp_add$sound_speed)
+        if(calc_echo == FALSE)
+          adcp_out <- calc_echo_amp(adcp_out)
+
+        return(adcp_out)
+
       }
-    }
 
-    if(sort_dttm) {
-      sorti <- order(adcp_out$dttm)
-      adcp_out$u <- adcp_out$u[sorti, ]
-      adcp_out$v <- adcp_out$v[sorti, ]
-      if(calc_echo == TRUE) {
-        adcp_out$Idb <- adcp_out$Idb[sorti, ]
-      }
-      adcp_out$backscat <- adcp_out$backscat[sorti, ]
-      adcp_out$quality <- adcp_out$quality[sorti, ]
-      adcp_out$percent <- adcp_out$percent[sorti, ]
-      adcp_out$lon <- adcp_out$lon[sorti]
-      adcp_out$lat <- adcp_out$lat[sorti]
-      adcp_out$dttm <- adcp_out$dttm[sorti]
-      adcp_out$temp <- adcp_out$temp[sorti]
-      adcp_out$sound_speed <- adcp_out$sound_speed[sorti]
-    }
 
-    if(calc_echo == FALSE)
-      adcp_out <- calc_echo_amp(adcp_out)
 
-    return(adcp_out)
-
-  } else {
-    return(adcp_in)
   }
+  return(adcp)
+
 }
 
 
@@ -306,5 +341,41 @@ calc_echo_amp <- function(adcp) {
   adcp$Idb <- Idb
 
   return(adcp)
+
+}
+
+
+adcp_to_tibble <- function(adcp_data, cruiseID = NULL) {
+
+  nc <- ifelse(is.na(DIM(adcp_data$u)[2]),
+               DIM(adcp_data$u)[1],
+               DIM(adcp_data$u)[2])
+
+  nb <- ifelse(is.na(DIM(adcp_data$u)[2]),
+               1,
+               DIM(adcp_data$u)[1])
+
+  spdir <- uv_to_wswd(adcp_data$u,adcp_data$v)
+
+  odv_out <- tibble::tibble(
+    station = rep(1:nb, each = nc),
+    dttm = rep(adcp_data$dttm, each = nc),
+    lon = rep(adcp_data$lon, each = nc),
+    lat = rep(adcp_data$lat, each = nc),
+    depth = rep(adcp_data$d, nb),
+    u = as.vector(t(adcp_data$u)),
+    v = as.vector(t(adcp_data$v)),
+    w = as.vector(t(adcp_data$v)),
+    sp = as.vector(t(spdir$ws)),
+    dir = as.vector(t(spdir$wd)),
+    err = as.vector(t(adcp_data$err)),
+    backscat = as.vector(t(adcp_data$backscat)),
+    quality = as.vector(t(adcp_data$quality)),
+    percent = as.vector(t(adcp_data$percent)),
+    temp = rep(adcp_data$temp, each = nc),
+    sound_speed = rep(adcp_data$sound_speed, each = nc)
+  )
+
+  return(odv_out)
 
 }

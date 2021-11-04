@@ -4,7 +4,7 @@
 \alias{read_adcp}
 \title{Read RDI ADCP ensemble file}
 \usage{
-read_adcp(adcp_file, calc_echo = FALSE)
+read_adcp(adcp_file, calc_echo = FALSE, to_tibble = TRUE)
 }
 \arguments{
 \item{adcp_file}{The file name of the ensemble file}
