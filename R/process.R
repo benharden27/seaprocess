@@ -2,14 +2,17 @@
 # a complete data archive and odv output
 #
 
-process_adcp <- function(adcp_folder, ...) {
+process_adcp <- function(adcp_folder, output_csv = NULL, output_odv = NULL,
+                         cruiseID = NULL, ...) {
 
   # Read in all adcp file in the folder
   adcp <- read_adcp_fold(adcp_folder, ...)
 
-
   # Convert adcp to csv output
-  # Convert adcp to odv output
+
+  if(!is.null(output_odv)) {
+    format_adcp_odv(adcp, output_odv, cruiseID = cruiseID)
+  }
 }
 
 #' Title
