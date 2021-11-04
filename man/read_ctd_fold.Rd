@@ -4,7 +4,7 @@
 \alias{read_ctd_fold}
 \title{Read all CNV files in a folder}
 \usage{
-read_ctd_fold(fold, check_vars = TRUE, ...)
+read_ctd_fold(fold, check_vars = TRUE, cruiseID = NULL, depth_vec = NULL, ...)
 }
 \arguments{
 \item{fold}{folder to read from}

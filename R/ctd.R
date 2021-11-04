@@ -15,7 +15,7 @@
 #' @export
 #'
 #' @examples
-read_ctd <- function(cnv_file, pmin = 5, p = 1, ...) {
+read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE, cruiseID = NULL, ...) {
 
 
 # Initial read ------------------------------------------------------------
@@ -36,6 +36,8 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, ...) {
 
   # Bin the CTD data into consistent pressure bins
   ctd <- oce::ctdDecimate(ctd_trim, p = 1, ...)
+
+  ## TODO put these on depth bins eventially
 
 # Extract metadata --------------------------------------------------------
 
@@ -60,6 +62,10 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, ...) {
   ctd@metadata$time <- dttm
   ctd@metadata$filename <- cnv_file
 
+  if(to_tibble) {
+    ctd <- ctd_to_tibble(ctd, cruiseID = cruiseID)
+  }
+
   return(ctd)
 
 }
@@ -74,37 +80,57 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, ...) {
 #' @export
 #'
 #' @examples
-read_ctd_fold <- function(fold, check_vars = TRUE, ...) {
+read_ctd_fold <- function(fold, check_vars = TRUE,
+                          cruiseID = NULL, depth_vec = NULL, ...) {
 
   files <- list.files(fold, pattern = "\\.cnv")
+
+  # try and set cruiseID from filenames if not set in function call
+  if(is.null(cruiseID)) {
+    for (i in 1:length(files)) {
+      cruiseID <- stringr::str_extract(files[i],"[S|C|c|s]{1}[0-9]{3}[a-z|A-Z]?")
+      if(!is.na(cruiseID)) {
+        cruiseID <- stringr::str_to_upper(cruiseID)
+        break
+      }
+    }
+  }
 
   ctd <- NULL
 
   for (i in 1:length(files)) {
-    ctd_add <- read_ctd(file.path(fold,files[i]),...)
-    if(!is.null(ctd_add)) {
-      ctd <- append(ctd,ctd_add)
-    }
-  }
 
-  # checks to see if there are missing vars recorded in some ctds and not others
-  # fill with NA is so
-  if(check_vars) {
-    vars <- NULL
-    for (i in 1:length(ctd)) {
-      var <- names(ctd[[i]]@data)
-      vars <- union(vars,var)
+    # read in the data from the file
+    ctd_add <- read_ctd(file.path(fold, files[i]), cruiseID = cruiseID, ...)
+
+    # check to see if the read was successful
+    if(is.null(ctd_add)) {
+      warning(paste("CTD in file", files[i], "was not added to complete data"))
+      next
     }
-    for (i in 1:length(ctd)) {
-      var <- names(ctd[[i]]@data)
-      varmiss <- setdiff(vars,var)
-      if(length(varmiss)>1){
-        l <- length(ctd[[i]]@data$pressure)
-        for (j in varmiss) {
-          ctd[[i]][[j]] <- rep(NA,l)
-        }
+
+    # check if the conversion to tibble should happen (default TRUE)
+    if(tibble::is_tibble(ctd_add)) {
+
+      # add a column for filename
+      ctd_add <- dplyr::mutate(ctd_add, file = files[i])
+
+      # check to see if this is the first file to be added
+      # otherwise bind to previous data
+      if(is.null(ctd)) {
+        ctd <- ctd_add
+      } else {
+        ctd <- dplyr::bind_rows(ctd, ctd_add)
+      }
+
+    # option to keep the ctds as a list
+    # (for troubleshooting - this should not be for default data processing)
+    } else {
+      if(!is.null(ctd_add)) {
+        ctd <- append(ctd,ctd_add)
       }
     }
+
 
   }
 
@@ -265,12 +291,134 @@ read_ros <- function(ros_file) {
 
   # group by bottles fired and find the means
   ros_df <- dplyr::group_by(ros_df, bottlesFired)
-  output <- dplyr::summarize_all(ros_df, list(mean))
+  output <- dplyr::summarize(dplyr::across(tidyselect::vars_select_helpers$everything(), mean))
   output <- dplyr::rename(output, bottle = bottlesFired)
 
   return(output)
 
 }
 
+#' Convert a ctd profile from OCE class ctd to tibble
+#'
+#' @param ctd_data
+#' @param cruiseID
+#'
+#' @return
+#' @export
+#'
+#' @examples
+ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL) {
 
+  # get all field names in the data set
+  all_fields <- names(ctd_data@metadata$dataNamesOriginal)
+
+  # find the indexes of those which have the words oxygen in them
+  ii <- stringr::str_which(all_fields,"oxygen")
+
+  # Set up initially empty oxygen vectors
+  oxygen_mL <- NA
+  oxygen_mM <- NA
+
+  # look through oxygen instances if any occur
+  if(length(ii)>0) {
+    for (iii in ii) {
+      original <- ctd_data@metadata$dataNamesOriginal[[iii]]
+      if(stringr::str_detect(original,"sbeox0Mm")) {
+        oxygen_mM <- ctd_data@data[[iii]]
+      }
+      if(stringr::str_detect(original,"sbeox0ML")) {
+        oxygen_mL <- ctd_data@data[[iii]]
+      }
+    }
+  }
+
+  # reset the values of oxygen for clarity
+  ctd_data@data$oxygen <- oxygen_mM
+  ctd_data@data$oxygen2 <- oxygen_mL
+
+  # check for par sensor
+  if(is.null(ctd_data@data$par)) {
+    par = NA
+  } else {
+    par <- ctd_data@data$par
+  }
+
+  # check if there is theta specified and provide if not
+  if(is.null(ctd_data@data$theta)) {
+    ctd_data@data$theta <- oce::swTheta(ctd_data@data$salinity,
+                                        ctd_data@data$temperature,
+                                        ctd_data@data$pressure)
+  }
+
+  # Check for fluoroesence fields and make sure we care selecting the right onw
+  ii <- stringr::str_which(all_fields,"fluor")
+  if(length(ii) > 0) {
+    for (iii in ii) {
+      original <- ctd_data@metadata$dataNamesOriginal[[iii]]
+      if(stringr::str_detect(original,"flSP")) {
+        ctd_data@data$fluorescence <- ctd_data@data[[iii]]
+      } else {
+        ctd_data@data[[iii]] <- NA
+      }
+    }
+  }
+  # final check for is fluoroesence is still NULL
+  if(is.null(ctd_data@data$fluorescence)) {
+    ctd_data@data$fluorescence <- NA
+  }
+
+  # set the station number
+  station <- stringr::str_pad(ctd_data@metadata$station,3,pad = "0")
+  if(!is.null(cruiseID)) {
+    station <- paste0(cruiseID,"-",station)
+  }
+
+  # finally create the output data frame
+  ctd_tibble <- tibble::tibble(dep = ctd_data@data$depth,
+                               pres = ctd_data@data$pressure,
+                               temp = ctd_data@data$temperature,
+                               theta = ctd_data@data$theta,
+                               sigtheta = ctd_data@data$sigmaTheta,
+                               sal = ctd_data@data$salinity,
+                               fluor = ctd_data@data$fluorescence,
+                               par = par,
+                               oxygen = ctd_data@data$oxygen,
+                               oxygen2 = ctd_data@data$oxygen2,
+                               lon = ctd_data@metadata$longitude,
+                               lat = ctd_data@metadata$latitude,
+                               station = station,
+                               cruise = ifelse(is.null(cruiseID),NA,cruiseID))
+
+  # finally regrid to depth bins
+  ctd_tibble <- interpolate_depth(ctd_tibble, depth_vec = depth_vec)
+
+  return(ctd_tibble)
+}
+
+
+#' Interpolate a ctd tibble on a regular pressure grid to a regular dept grid
+#'
+#' @param ctd_tibble
+#' @param depth_vec
+#'
+#' @return
+#' @export
+#'
+#' @examples
+interpolate_depth <- function(ctd_tibble, depth_vec = NULL) {
+
+  if(is.null(depth_vec)) {
+    depth_vec <- ceiling(min(ctd_tibble$dep,na.rm=T)):floor(max(ctd_tibble$dep,na.rm=T))
+  }
+
+  ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,cruise,dep,station))
+  ctd_tibble <- dplyr::group_by(ctd_tibble, cruise, station, lon, lat, name)
+  ctd_tibble <- dplyr::filter(ctd_tibble, any(!is.na(value)))
+  ctd_tibble <- dplyr::summarise(ctd_tibble, h = list(depth_vec), a = list(approx(x = dep, y = value, xout = depth_vec)$y))
+  ctd_tibble <- tidyr::unnest(ctd_tibble, cols = c(h,a))
+  ctd_tibble <- tidyr::pivot_wider(ctd_tibble, names_from = name, values_from = a)
+  ctd_tibble <- dplyr::rename(ctd_tibble, dep = h)
+
+  return(ctd_tibble)
+}
 
