@@ -127,7 +127,7 @@ format_adcp_odv <- function(data, output_odv, cruiseID = NULL) {
     `Lon [degrees_east]` = data$lon,
     `Lat [degrees_north]` = data$lat,
     `Bot. Depth [m]` = " ",
-    `Depth [m]` = data$d,
+    `Depth [m]` = data$depth,
     `Echo Amplitude [counts]` = data$backscat,
     `East Component [mm/s]` = data$u * 1000,
     `North Component [mm/s]` = data$v * 1000,
@@ -162,36 +162,25 @@ format_ctd_odv <- function(data,file,cruiseID = NULL) {
     }
   }
 
-  # Convert from sea structure to get the adcp part
-  if(is_sea_struct(data)){
-    data <- data$ctd
-  }
-
-  s <- make_section(data)
-  s <- oce::sectionGrid(s)
-
-  p <- unique(s[['pressure']])
-  n <- length(data)
-
   odv_out <- tibble::tibble(
     Cruise = cruiseID,
-    Station = rep_each(get_ctd_meta(data,"station"),length(p)),
+    Station = data$station,
     Type = "C",
-    `mon/day/yr` = rep_each(format(s[["time"]],"%m/%d/%Y"),length(p)),
-    `hh:mm` = rep_each(format(s[["time"]],"%H:%M"), length(p)),
-    `Lon [degrees_east]` = s[["longitude"]],
-    `Lat [degrees_north]` = s[["latitude"]],
-    `Bot. Depth [m]` = rep_each(get_ctd_meta(data,"waterDepth"),length(p)),
-    `Depth [m]` = s[["depth"]],
-    `Temperature [~^oC]` = s[["temperature"]],
-    `Salinity [psu]` = s[["salinity"]],
-    `Density[Kg/m~^3]` = s[["sigmaTheta"]],
-    `Chl a Fluorescence [V]` = s[["fluorescence"]],
-    `Oxygen,SBE43[~$m~#mol/kg]` = s[["oxygen"]],
+    `mon/day/yr` = "01/01/2020",
+    `hh:mm` = "00:00",
+    `Lon [degrees_east]` = data$lon,
+    `Lat [degrees_north]` = data$lat,
+    `Bot. Depth [m]` = " ",
+    `Depth [m]` = data$dep,
+    `Temperature [~^oC]` = data$temp,
+    `Salinity [psu]` = data$sal,
+    `Density[Kg/m~^3]` = data$sigtheta,
+    `Chl a Fluorescence [V]` = data$fluor,
+    `Oxygen,SBE43[~$m~#mol/kg]` = data$oxygen,
+    `Oxygen [mL/L]` = data$oxygen2,
     `CDOM Fluorescence [mg/m~^3]` = " ",
-    `PAR Irradience [~$m~#E/m~^2/s]` = s[["par"]],
-    `Transmittance [V]` = " ",
-    `Oxygen [mL/L]` = s[["oxygen2"]]
+    `PAR Irradience [~$m~#E/m~^2/s]` = data$par,
+    `Transmittance [V]` = " "
   )
 
   readr::write_tsv(odv_out,file)

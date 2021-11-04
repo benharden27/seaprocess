@@ -99,7 +99,9 @@ process_ctd <- function(ctd_folder, cruiseID = NULL,
   }
   safely_write_csv(ctd, file.path(csv_folder,csv_filename))
 
-  ## TODO CTD odv output
+  if(!is.null(odv_folder)) {
+    format_ctd_odv(ctd, file.path(odv_folder,odv_filename), cruiseID = cruiseID)
+  }
 
 }
 
