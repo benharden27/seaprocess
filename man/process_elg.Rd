@@ -2,14 +2,17 @@
 % Please edit documentation in R/process.R
 \name{process_elg}
 \alias{process_elg}
-\title{Title}
+\title{Master processing function for event data}
 \usage{
 process_elg(
   elg_folder,
-  output_csv = NULL,
-  output_odv = NULL,
-  average_window = 60,
   cruiseID = NULL,
+  csv_folder = "output/csv",
+  csv_filename = "elg.csv",
+  odv_folder = "output/odv/elg",
+  odv_filename = "elg.txt",
+  add_cruiseID = TRUE,
+  average_window = 60,
   ...
 )
 }
@@ -20,5 +23,5 @@ process_elg(
 
 }
 \description{
-Title
+Master processing function for event data
 }

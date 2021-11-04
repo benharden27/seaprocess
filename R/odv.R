@@ -7,7 +7,7 @@
 #' @export
 #'
 #' @examples
-format_odv <- function(data,folder,
+format_odv <- function(data, folder,
                        fields = c("hourly","surfsamp","neuston","adcp","ctd","hydro"),
                        import = FALSE, ...) {
 
@@ -74,7 +74,7 @@ format_odv <- function(data,folder,
 #' @examples
 write_odv <- function(odv_out, output_odv = NULL) {
   if(!is.null(output_odv)) {
-    output <- safely(readr::write_tsv)(odv_out,output_odv)
+    output <- purrr::safely(readr::write_tsv)(odv_out,output_odv)
     if(!is.null(output$error)) {
       warning("Couldn't export the data to a odv file. Most likely specified directory doesn't exist")
     }
@@ -118,25 +118,23 @@ format_adcp_odv <- function(data, output_odv, cruiseID = NULL) {
     }
   }
 
-  nc <- dim(data$u)[2]
-  spdir <- uv_to_wswd(data$u,data$v)
 
   odv_out <- tibble::tibble(
     Cruise = cruiseID,
-    Station = rep(1:dim(data$u)[1], each = nc),
+    Station = data$station,
     Type = "C",
-    `mon/day/yr` = rep(format(data$dttm,"%m/%d/%Y"), each = nc),
-    `Lon [degrees_east]` = rep(data$lon, each = nc),
-    `Lat [degrees_north]` = rep(data$lat, each = nc),
+    `mon/day/yr` = format(data$dttm,"%m/%d/%Y"),
+    `Lon [degrees_east]` = data$lon,
+    `Lat [degrees_north]` = data$lat,
     `Bot. Depth [m]` = " ",
-    `Depth [m]` = rep(data$d, dim(data$u)[1]),
-    `Echo Amplitude [counts]` = as.vector(t(data$backscat)),
-    `East Component [mm/s]` = as.vector(t(data$u)) * 1000,
-    `North Component [mm/s]` = as.vector(t(data$v)) * 1000,
-    `Magnitude [mm/s]` = as.vector(t(spdir$ws)) * 1000,
-    `Direction [deg]` = as.vector(t(spdir$wd)),
+    `Depth [m]` = data$d,
+    `Echo Amplitude [counts]` = data$backscat,
+    `East Component [mm/s]` = data$u * 1000,
+    `North Component [mm/s]` = data$v * 1000,
+    `Magnitude [mm/s]` = data$sp * 1000,
+    `Direction [deg]` = data$dir,
     Ensemble = 0,
-    `hh:mm` = rep(format(data$dttm,"%H:%M"), each = nc)
+    `hh:mm` = format(data$dttm,"%H:%M")
   )
 
   write_odv(odv_out, output_odv)
