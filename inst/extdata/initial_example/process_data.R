@@ -19,10 +19,10 @@ library(seaprocess)
 # Filepaths likely to looks something like "Z:\\Data" for data stored on other
 # machines and "ctd" for data folders in this project directory
 
-cruiseID <- "C285C"
+cruiseID <- ""
 adcp_folder <- "adcp"
 ctd_folder <- "ctd"
-adcp_folder <- "elg"
+elg_folder <- "elg"
 
 
 
