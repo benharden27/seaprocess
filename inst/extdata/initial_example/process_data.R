@@ -1,20 +1,54 @@
 ### Master processing file for the cruise
 ###
 
-cruiseID <- NULL
+# This script is intended to be edited. You wont mess anything up with the raw
+# data or data entred into the input datasheets by changing anything in here.
+# You *may* end up overwriting some output data, but that is all
+# recoverable.
 
-process_adcp("adcp", cruiseID = cruiseID)
 
-process_elg("elg",cruiseID = cruiseID)
+# Loading the processing library ------------------------------------------
 
-process_ctd("ctd/Cnv",cruiseID = cruiseID)
+library(seaprocess)
+
+
+
+# Set up code parameters --------------------------------------------------
+# Enter the cruise code and the folder paths for where the data are stored.
+#
+# Filepaths likely to looks something like "Z:\\Data" for data stored on other
+# machines and "ctd" for data folders in this project directory
+
+cruiseID <- "C285C"
+adcp_folder <- "adcp"
+ctd_folder <- "ctd"
+adcp_folder <- "elg"
+
+
+
+# Process non-datasheet data sources --------------------------------------
+
+# Process ADCP data
+process_adcp(adcp_folder, cruiseID = cruiseID)
+
+# Process elg (event file) data
+process_elg(elg_folder, cruiseID = cruiseID, average_window = 60)
+
+# Process ctd data
+process_ctd(ctd_folder, cruiseID = cruiseID)
+
+
+
+# Process datasheets ------------------------------------------------------
 
 # create_summary()
 #
-# create_hourly()
+# create_neuston()
 #
-# create_neuston
+# create_meter()
 #
-# create_meter
+# create_bottle()
 #
-# create_bottle
+# create_ctd()
+#
+# create_other_datasheet()
