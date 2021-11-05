@@ -4,7 +4,13 @@
 \alias{create_summary}
 \title{Create Station Summary Sheet}
 \usage{
-create_summary(summary_input, elg_input, csv_output = NULL)
+create_summary(
+  summary_input,
+  elg_input,
+  csv_output = NULL,
+  force_stations = FALSE,
+  ...
+)
 }
 \arguments{
 \item{summary_input}{The input datasheet that includes the relevent station and deployment metadata}
@@ -38,6 +44,7 @@ To do this, \code{\link[=create_summary]{create_summary()}} takes in an excel sh
 \item Location
 \item Surface Temperature
 \item Surface Salinity
+\item etc.
 }
 
 The event data is typically stored in a file with an extension elg. \code{\link[=read_elg]{read_elg()}} deals with reading this data in and formatting it properly.
