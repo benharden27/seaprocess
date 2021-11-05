@@ -287,22 +287,51 @@ parse_field <- function(df, regex, parse_fun, ...) {
 #' @examples
 read_elg_fold <- function(root_folder, sort_elg = TRUE, ...) {
 
+  # get all file names in folder
   files <- list.files(root_folder,pattern = '\\.elg$')
+
+  # Set up blank data structure
+  elg <- NULL
+
+  # as long as there are files in the folder continue
   if(length(files) > 0) {
+
+    # loop through all the files
     for (i in 1:length(files)) {
+
+      # file name to be read in
       filein <- file.path(root_folder,files[i])
-      if(i==1) {
-        elg <- read_elg(filein, ...)
+
+      # read in the file, but return NULL is not possible
+      elg_add <- purrr::possibly(read_elg, NULL)(filein, ...)
+
+      # if data has content, add it to the previous data
+      if(!is.null(elg_add)) {
+        if(i==1) {
+          elg <- elg_add
+        } else {
+          elg <- dplyr::bind_rows(elg, elg_add)
+        }
+
+      # if elg_add is empty acknowledge but move on
       } else {
-        elg <- dplyr::bind_rows(elg, read_elg(filein, ...))
+        warning(paste("elg file:",filein,"could not be read in and is not being added to the collection"))
       }
     }
+
+    # Check for if no files could be read in
+    if(is.null(elg)) {
+      stop("elg files exist in specified folder, but none could be read in")
+    }
+
+    # optional sorting
     if(sort_elg) {
       elg <- dplyr::arrange(elg, dttm)
     }
+
   } else {
+    # error message lets user know that no elg files were found so no data could be read in.
     stop("No elg files in specified folder.")
-    elg <- NULL
   }
 
 
@@ -367,10 +396,49 @@ average_elg <- function(data, average_window = 60) {
   # TODO need clause to test for crossing the antimeridian where the hourly average will be odd
   # could test for this before the averaging and then change back after
 
+  # check for time gaps in average data and add them back in
+  data_out <- fill_time_gaps(data_out, average_window = average_window)
+
+  # finally make sure data is sorted by increasing datetime
+  data_out <- dplyr::arrange(data_out, dttm)
+
   return(data_out)
 
 }
 
+fill_time_gaps <- function(data, average_window) {
+
+  # set up a datetime vector that spans the data
+  test_time_vector <- seq(min(data$dttm, na.rm = TRUE),
+                          max(data$dttm, na.rm = TRUE),
+                          by = 60 * average_window)
+
+  # test to see which places are missing
+  time_gaps_i <- test_time_vector %in% data$dttm
+
+  # if gaps ae found, plug them with NAs
+  if(length(which(!time_gaps_i)) > 0) {
+
+    # create vector of missing times
+    times_to_fill <- test_time_vector[!time_gaps_i]
+
+    # create a row of blank values and replicate to the number of rows of missing times
+    na_row_add <- purrr::quietly(tibble::as_tibble)(t(rep(NA_real_, ncol(data))))$result
+    names(na_row_add) <- names(data)
+    na_row_add <- dplyr::mutate(na_row_add, count = length(times_to_fill))
+    na_tibble_add <- tidyr::uncount(na_row_add, count)
+
+    # add the missing times to the datetime column and add to the original data
+    na_tibble_add$dttm <- times_to_fill
+    data <- dplyr::bind_rows(data, na_tibble_add)
+
+    # sort the data to ensure gaps come sequentially
+    data <- dplyr::arrange(data, dttm)
+  }
+
+  return(data)
+
+}
 
 ##|
 # tidyselect::vars_select_helpers$where(lubridate::is.Date) |
