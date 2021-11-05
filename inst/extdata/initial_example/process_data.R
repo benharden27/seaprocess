@@ -17,11 +17,11 @@ library(seaprocess)
 # Enter the cruise code and the folder paths for where the data are stored.
 #
 # Filepaths likely to looks something like "Z:\\Data" for data stored on other
-# machines and "ctd" for data folders in this project directory
+# machines and "ctd/Cnv" for data folders in this project directory
 
 cruiseID <- ""
 adcp_folder <- "adcp"
-ctd_folder <- "ctd"
+ctd_folder <- "ctd/Cnv"
 elg_folder <- "elg"
 
 
