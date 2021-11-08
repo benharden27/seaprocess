@@ -4,7 +4,7 @@
 \alias{zd_to_tz}
 \title{Zone Description to Time Zone}
 \usage{
-zd_to_tz(zd)
+zd_to_tz(zd, format_out = FALSE)
 }
 \arguments{
 \item{zd}{}

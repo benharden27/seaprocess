@@ -8,7 +8,7 @@ create_summary(
   summary_input,
   elg_input,
   csv_output = NULL,
-  force_stations = FALSE,
+  force_stations = TRUE,
   ...
 )
 }

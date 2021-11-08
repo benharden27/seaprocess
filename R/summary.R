@@ -41,7 +41,7 @@
 #' summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
 #' elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
 #' summary <- create_summary(summary_input, elg_input)
-create_summary <- function(summary_input, elg_input, csv_output = NULL, force_stations = FALSE, ...) {
+create_summary <- function(summary_input, elg_input, csv_output = NULL, force_stations = TRUE, ...) {
 
   # read in the summary_input xlsx file
   summary <- readxl::read_excel(summary_input, col_types = "text")
@@ -55,6 +55,11 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL, force_st
 
   # Test to see whether elg_input is a file or a folder and read elg file(s) accordingly
   elg <- get_elg(elg_input)
+
+  # filter out rows for which there is data hand-entered
+  summary_hand_enter <- dplyr::filter(summary, !dplyr::if_all(lon:fluor,is.na))
+  summary <- dplyr::filter(summary, dplyr::if_all(lon:fluor,is.na))
+  summary <- dplyr::select(summary, !c(lon,lat,temp,sal,fluor))
 
   # find all the nearest date time values of summary sheet to the elg file and add these indeces
   # TODO: what happens if any of ii are blank or at beginning or end of the elg?
@@ -83,9 +88,18 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL, force_st
 
 
   # extract these values and add to the right of summary
-  # TODO: make the outputs selectible when you run the function
+  # TODO: make the outputs selectable when you run the function
   elg_to_add <- dplyr::select(elg[ii,], lon, lat, temp, sal, fluor)
   summary <- dplyr::bind_cols(summary,elg_to_add)
+
+  # add back in the hand entered values
+  if(nrow(summary_hand_enter)>0) {
+    summary_hand_enter <- dplyr::mutate(summary_hand_enter,dplyr::across(lon:fluor,as.numeric))
+    summary <- dplyr::bind_rows(summary, summary_hand_enter)
+  }
+
+  # sort by station
+  summary <- dplyr::arrange(summary, dttm)
 
   # check to ensure that there are no duplicate deployments for any one station
   duplicated_deployments <- dplyr::n_groups(dplyr::group_by(summary, station, deployment)) != nrow(summary)
@@ -133,8 +147,9 @@ format_csv_output <- function(df, dttm_format = "%Y-%m-%dT%H:%M", dttm_suffix = 
                               ll_dec = 4, temp_dec = 2, sal_dec = 3, fluor_dec = 2) {
 
   # Format date and time to be in ISO 8601 format including timezone
-  if("zd" %in% colnames(df) & "dttm" %in%colnames(df)) {
-    df$dttm <- paste0(format(df$dttm - lubridate::hours(df$zd), dttm_format), zd_to_tz(df$zd))
+  if("zd" %in% colnames(df) & "dttm" %in% colnames(df)) {
+    df$dttm <- paste0(format(df$dttm - lubridate::hours(df$zd), dttm_format),
+                      zd_to_tz(df$zd, format_out = TRUE))
   }
 
   # TODO: create list of all column names and default resolutions
@@ -182,13 +197,24 @@ format_decimal <- function(df, col_name, digits) {
 #' @export
 #'
 #' @examples
-zd_to_tz <- function(zd) {
+zd_to_tz <- function(zd, format_out = FALSE) {
 
   tz <- as.numeric(zd) * -1
-  tz <- as.character(tz)
-  ii <- !stringr::str_sub(tz,1,1) == "-"
-  tz[ii] <- paste0("+", tz[ii])
 
+  if(format_out) {
+    if(sign(tz)==0){
+      tz <- "Z"
+    } else {
+      tz <- paste0(ifelse(sign(tz)==1, "+", "-"),
+                       stringr::str_pad(abs(tz),2,pad = "0"),
+                       ":00")
+    }
+
+  } else {
+    tz <- as.character(tz)
+    ii <- !stringr::str_sub(tz,1,1) == "-"
+    tz[ii] <- paste0("+", tz[ii])
+  }
   return(tz)
 }
 
