@@ -291,10 +291,18 @@ read_ros <- function(ros_file) {
 
   # group by bottles fired and find the means
   ros_df <- dplyr::group_by(ros_df, bottlesFired)
-  output <- dplyr::summarize(dplyr::across(tidyselect::vars_select_helpers$everything(), mean))
-  output <- dplyr::rename(output, bottle = bottlesFired)
+  ros_df <- dplyr::summarise(ros_df,dplyr::across(tidyselect::vars_select_helpers$everything(),  ~mean(.x, na.rm = TRUE)))
+  ros_df <- dplyr::rename(ros_df, bottle = bottlesFired)
 
-  return(output)
+  ros_df <- dplyr::mutate(ros_df,
+                          theta = oce::swTheta(salinity = salinity,
+                                               temperature = temperature,
+                                               pressure = pressure),
+                          sigma = oce::swSigma0(salinity = salinity,
+                                                temperature = temperature,
+                                                pressure = pressure))
+
+  return(ros_df)
 
 }
 
