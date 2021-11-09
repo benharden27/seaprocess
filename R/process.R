@@ -118,10 +118,25 @@ safely_write_csv <- function(data, csv_filepath = NULL) {
 
 }
 
+
+process_datasheet <- function(datasheet_input, summary_csv,
+                              data_type = "CTD", ...) {
+
+
+
+
+}
+
+
 add_file_cruiseID <- function(filename, cruiseID) {
 
   if(!is.null(filename) & !is.null(cruiseID)) {
+    file_dir <- dirname(filename)
+    filename <- basename(filename)
     filename <- paste0(cruiseID,"_",filename)
+    filename <- file.path(file_dir,filename)
+  } else {
+    stop("filename or cruiseID are not set")
   }
 
   return(filename)
