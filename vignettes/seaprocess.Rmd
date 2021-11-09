@@ -32,9 +32,68 @@ The goals of this package are to:
 
 ## OVERVIEW PROCESS DIAGRAM
 
+# Processing Philosophy
+
+The processing functions in this package are built such that in theory you *should* be able run a very general command that should take the raw data in any stream and take it all the way through to final output. However, there are always odd data examples in any cruise so built in to the processing routines are ways to initialize these higher level functions to change processing routines at lower levels
+
+For example:
+
+To process elg event files we use the function `process_elg()`. The only thing you have to specify is the location of the folder that contains the elg event files. ie.
+
+```{r, eval = FALSE}
+process_elg("data/elg")
+```
+
+Under the hood, `process_elg()` is calling:
+
+* `read_elg_fold()`, which is the actual function that reads a list of elg files from a folder. It loops through all the elg files in a folder and in-tern calls `read_elg()` which is the function that reads individual elg files. `read_elg_fold()` then combines them all in to one data file
+
+* `average_elg()`, which is a function that averages the data into some time window. This is a little akin to what hourlywork used to do. However, you can specify the averaging window to be any number of minutes.
+
+* `add_file_cruiseID()`, which adds an optional cruise identifier to output files so that you can keep them organized.
+
+* `safely_write_csv()`, which writes the averaged data to a comma-separated-value file
+
+* `format_elg_odv()`, which formats the averaged data so that it can be read into Ocean Data View.
+
+The complete list of settings you can send to process_elg() are:
+
+```
+process_elg(
+  elg_folder,
+  cruiseID = NULL,
+  csv_folder = "output/csv",
+  csv_filename = "elg.csv",
+  odv_folder = "output/odv/elg",
+  odv_filename = "elg.txt",
+  add_cruiseID = TRUE,
+  average_window = 60,
+  ...
+)
+```
+
+So, `elg_folder` is the only thing you *need* to specify, but you can change any of the other arguments to customize the performance. See the help file for `process_elg()1 for details of what each do.
+
+
+
+
 # Continuous data streams
 
 ## Cruise Track and Surface data
+
+SEA records it's location and flowthrough data in a one-minute resolution text files with .elg file extensions. These are known as event files and they are created through a piece of software called SCS. These data files combine locational data with data from the flowthrough system and other data devices such as (in some cases) the CHIRP and weather system.
+
+These data files are relatively simply read-in as they are in a comma-separated-value (csv) file format with one header line of column titles and corresponding data lines with columns separated by commas. The column headings are a little different between ships and between eras on board so the reading script is flexible to known variations in headings.
+
+
+To read in an elg file you can use:
+
+```{r, eval =F}
+
+
+elg_data <- read_elg(system.file("extdata", "example_data","Event60sec_012.elg", package="seaprocess"))
+```
+
 
 ## ADCP
 
@@ -74,7 +133,7 @@ ADD SCREEN GRAB
 
 NOTE: There is a new line on the sheet for every deployment type at every station so as to make use of the actual time of deployment in finding the location (see below). An example of this can be seen here.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, eval = FALSE}
 knitr::kable(readxl::read_excel(system.file("extdata", "S285_station.xlsx", package="seaprocess"), col_types = "text"))
 ```
 
@@ -99,13 +158,13 @@ With these inputs, the function reads in the elg information, looks at all the d
 
 An example of these code in action and the output can be seen here.
 
-```{r, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
 summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
 elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
 summary <- create_summary(summary_input, elg_input)
 ```
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, eval = FALSE}
 knitr::kable(summary)
 ```
 ADD IN CODE AND DESCRIPTION OF FAIL SAFES IF THE ELG DATA IS NOT AVAILABLE
@@ -128,20 +187,20 @@ To do this we use the `create_datasheet()` function which takes in the following
 
 For example, with CTD data, our initial Excel datasheet looks like this:
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, eval = FALSE}
 knitr::kable(readxl::read_excel(system.file("extdata", "S285_ctd.xlsx", package="seaprocess"), col_types = "text"))
 ```
 
 You can see that there is no info on location, timing, etc. but we have that all stored away elsewhere. All we need is to bring it together like this:
 
-```{r}
+```{r, eval = FALSE}
 data_input <- system.file("extdata", "S285_ctd.xlsx", package="seaprocess")
 summary_input <- system.file("extdata", "S285_station.csv", package="seaprocess")
 data_type = "CTD"
 datasheet <- create_datasheet(data_input, summary_input, data_type)
 ```
 
-```{r}
+```{r, eval = FALSE}
 knitr::kable(datasheet)
 ```
 
@@ -153,7 +212,7 @@ To get a working copy of this data, you can export it as a csv file, just like i
 create_datasheet(data_input, summary_input, data_type, "<some-path-to-folder>/<C/SXXX>_ctd.csv"")
 ```
 
-### Neuston caveat
+### Neuston datasheet
 
 There is one additional (well, more right now) Neuston datasheet step which is to also calculate the biodensity of the tow by dividing the biovolume of zooplankton by the tow length.
 
