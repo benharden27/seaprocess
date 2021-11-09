@@ -10,11 +10,22 @@
 #'
 #' @examples
 create_datasheet <- function(data_input, summary_input, data_type = "CTD",
-                             ros_input = NULL, csv_output = NULL, elg_input = NULL) {
+                             csv_output = "output/csv", cruiseID = NULL, add_cruiseID = TRUE,
+                             ...) {
+
+  if(csv_output == "output/csv") {
+    csv_output <- file.path("output","csv",paste0(stringr::str_to_lower(data_type),"_datasheet.csv"))
+  }
 
   if(data_type == "bottle") {
     data_type <- c("HC","B")
   }
+
+  if(data_type == "neuston") {
+    data_type <- "NT"
+  }
+
+  data_type <- stringr::str_to_upper(data_type)
 
   # read in the data_input excel sheet datasheet
   data <- readxl::read_excel(data_input)
@@ -47,12 +58,12 @@ create_datasheet <- function(data_input, summary_input, data_type = "CTD",
 
   # Bottle specific stuff
   if(sum(data_type %in% c("HC", "B")) > 0) {
-    data <- compile_bottle(data, ros_input)
+    data <- compile_bottle(data, ...)
   }
 
   # Neuston specific stuff
   if(data_type == "NT") {
-    data <- compile_neuston(data, elg_input)
+    data <- compile_neuston(data, ...)
   }
 
   # Remove columns we don't need, e.g. deployment
@@ -60,6 +71,9 @@ create_datasheet <- function(data_input, summary_input, data_type = "CTD",
 
   # export to csv
   if(!is.null(csv_output)) {
+    if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+      csv_output <- add_file_cruiseID(csv_output, cruiseID)
+    }
     readr::write_csv(format_csv_output(data),csv_output, na = "")
   }
 

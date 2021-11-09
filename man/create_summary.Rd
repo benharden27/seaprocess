@@ -7,8 +7,10 @@
 create_summary(
   summary_input,
   elg_input,
-  csv_output = NULL,
+  csv_output = "output/csv/summary_datasheet.csv",
   force_stations = TRUE,
+  cruiseID = NULL,
+  add_cruiseID = TRUE,
   ...
 )
 }

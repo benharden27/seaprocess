@@ -41,7 +41,9 @@
 #' summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
 #' elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
 #' summary <- create_summary(summary_input, elg_input)
-create_summary <- function(summary_input, elg_input, csv_output = NULL, force_stations = TRUE, ...) {
+create_summary <- function(summary_input, elg_input, csv_output = "output/csv/summary_datasheet.csv",
+                           force_stations = TRUE, cruiseID = NULL, add_cruiseID = TRUE,
+                           ...) {
 
   # read in the summary_input xlsx file
   summary <- readxl::read_excel(summary_input, col_types = "text")
@@ -116,6 +118,9 @@ create_summary <- function(summary_input, elg_input, csv_output = NULL, force_st
       # test to see if the filename directory is already in existence
       if(dir.exists(dirname(csv_output))) {
         # create csv output at csv_output location
+        if(add_cruiseID & !is.null(cruiseID)) {
+          csv_output <- add_file_cruiseID(csv_output, cruiseID)
+        }
         readr::write_csv(format_csv_output(summary, ...),csv_output)
       } else {
         stop("csv_output does not direct towards a valid existing folder")

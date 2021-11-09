@@ -8,9 +8,10 @@ create_datasheet(
   data_input,
   summary_input,
   data_type = "CTD",
-  ros_input = NULL,
-  csv_output = NULL,
-  elg_input = NULL
+  csv_output = "output/csv",
+  cruiseID = NULL,
+  add_cruiseID = TRUE,
+  ...
 )
 }
 \arguments{
