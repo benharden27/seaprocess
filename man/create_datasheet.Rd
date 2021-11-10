@@ -6,11 +6,13 @@
 \usage{
 create_datasheet(
   data_input,
-  summary_input,
+  summary_input = "output/csv/summary_datasheet.csv",
   data_type = "CTD",
-  csv_output = "output/csv",
+  csv_folder = "output/csv",
+  csv_filename = "datasheet.csv",
   cruiseID = NULL,
   add_cruiseID = TRUE,
+  add_deployment_type = TRUE,
   ...
 )
 }

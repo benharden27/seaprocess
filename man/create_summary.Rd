@@ -7,7 +7,8 @@
 create_summary(
   summary_input,
   elg_input,
-  csv_output = "output/csv/summary_datasheet.csv",
+  csv_folder = "output/csv",
+  csv_filename = "summary_datasheet.csv",
   force_stations = TRUE,
   cruiseID = NULL,
   add_cruiseID = TRUE,
@@ -17,9 +18,9 @@ create_summary(
 \arguments{
 \item{summary_input}{The input datasheet that includes the relevent station and deployment metadata}
 
-\item{csv_output}{The desired output location for the well-formatted csv file}
-
 \item{elg}{The cruise elg file (or folder of files) for extracting continuous data from}
+
+\item{csv_output}{The desired output location for the well-formatted csv file}
 }
 \value{
 A tibble containing the combined data frames. If csv_output is set to a valid output path then a formatted csv file is output also.

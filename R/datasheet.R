@@ -9,23 +9,38 @@
 #' @export
 #'
 #' @examples
-create_datasheet <- function(data_input, summary_input, data_type = "CTD",
-                             csv_output = "output/csv", cruiseID = NULL, add_cruiseID = TRUE,
-                             ...) {
+create_datasheet <- function(data_input, summary_input = "output/csv/summary_datasheet.csv",
+                             data_type = "CTD",
+                             csv_folder = "output/csv", csv_filename = "datasheet.csv",
+                             cruiseID = NULL, add_cruiseID = TRUE,
+                             add_deployment_type = TRUE, ...) {
 
-  if(csv_output == "output/csv") {
-    csv_output <- file.path("output","csv",paste0(stringr::str_to_lower(data_type),"_datasheet.csv"))
+  if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+    if(summary_input == "output/csv/summary_datasheet.csv") {
+      summary_input <- add_file_cruiseID(summary_input, cruiseID)
+    }
   }
 
   if(data_type == "bottle") {
     data_type <- c("HC","B")
-  }
-
-  if(data_type == "neuston") {
+    if(add_deployment_type) {
+      csv_filename <- paste0("bottle_", csv_filename)
+    }
+  } else if(data_type == "neuston") {
     data_type <- "NT"
+    if(add_deployment_type) {
+      csv_filename <- paste0("neuston_", csv_filename)
+    }
+  } else if(data_type == "CTD") {
+    data_type <- c("CTD","HC")
+    if(add_deployment_type) {
+      csv_filename <- paste0("ctd_", csv_filename)
+    }
+  } else {
+    if(add_deployment_type) {
+      csv_filename <- paste0(stringr::str_to_lower(data_type), "_", csv_filename)
+    }
   }
-
-  data_type <- stringr::str_to_upper(data_type)
 
   # read in the data_input excel sheet datasheet
   data <- readxl::read_excel(data_input)
@@ -37,10 +52,6 @@ create_datasheet <- function(data_input, summary_input, data_type = "CTD",
   colnames(data) <- stringr::str_remove_all(colnames(data), "_\\(.*\\)")
   colnames(data) <- stringr::str_remove_all(colnames(data), "_%")
   colnames(data) <- stringr::str_remove_all(colnames(data), "\\.")
-
-  data <- dplyr::mutate(data, bottle = as.character(bottle))
-  # add a new column to aid the joining later
-  data <- dplyr::mutate(data, deployment = ifelse(is.na(as.numeric(bottle)) | as.numeric(bottle) > 12, "B", "HC"))
 
   # read in station summary datasheet
   # TODO: determine what formating to apply when read in (beyond zd)
@@ -54,15 +65,25 @@ create_datasheet <- function(data_input, summary_input, data_type = "CTD",
   # filter by data_type
   summary <- dplyr::filter(summary, deployment %in% data_type)
 
-  data <- dplyr::right_join(summary, data, by=c("station","deployment"))
+
 
   # Bottle specific stuff
-  if(sum(data_type %in% c("HC", "B")) > 0) {
+  if(sum(data_type %in% c("HC", "B")) > 1) {
+
+    data <- dplyr::mutate(data, bottle = as.character(bottle))
+    # add a new column to aid the joining later
+    data <- dplyr::mutate(data, deployment = ifelse(is.na(as.numeric(bottle)) | as.numeric(bottle) > 12, "B", "HC"))
+
+    data <- dplyr::right_join(summary, data, by=c("station","deployment"))
     data <- compile_bottle(data, ...)
+
+  } else {
+    data <- dplyr::right_join(summary, data, by=c("station"))
   }
 
+
   # Neuston specific stuff
-  if(data_type == "NT") {
+  if(sum(data_type %in% "NT")>0) {
     data <- compile_neuston(data, ...)
   }
 
@@ -70,7 +91,8 @@ create_datasheet <- function(data_input, summary_input, data_type = "CTD",
   data <- dplyr::select(data, -deployment)
 
   # export to csv
-  if(!is.null(csv_output)) {
+  if(!is.null(csv_filename) & !is.null(csv_folder)) {
+    csv_output <- file.path(csv_folder, csv_filename)
     if(add_cruiseID == TRUE & !is.null(cruiseID)) {
       csv_output <- add_file_cruiseID(csv_output, cruiseID)
     }
@@ -91,30 +113,36 @@ compile_neuston <- function(data, elg_input) {
   time_diff[time_diff<0] <- time_diff[time_diff<0] + 60 * 24
   data <- dplyr::mutate(data,dttm_out = dttm + lubridate::minutes(time_diff))
 
-  # read in elg
-  elg <- get_elg(elg_input)
+  if(!is.null(elg_input)) {
+    # read in elg
+    elg <- get_elg(elg_input)
 
-  # find nearest points and calculate along-path distance
-  sti <- find_near(elg$dttm, data$dttm)
-  eni <- find_near(elg$dttm, data$dttm_out)
-  tow_length <- rep(NA, length(sti))
-  for (i in 1:length(sti)) {
-    tow_length[i] <- tail(
-      oce::geodDist(
-        elg$lon[sti[i]:eni[i]],
-        elg$lat[sti[i]:eni[i]],
-        alongPath = TRUE),1)
-  }
+    # find nearest points and calculate along-path distance
+    sti <- find_near(elg$dttm, data$dttm)
+    eni <- find_near(elg$dttm, data$dttm_out)
+    tow_length <- rep(NA, length(sti))
+    for (i in 1:length(sti)) {
+      tow_length[i] <- tail(
+        oce::geodDist(
+          elg$lon[sti[i]:eni[i]],
+          elg$lat[sti[i]:eni[i]],
+          alongPath = TRUE),1)
+    }
 
 
-  #add tow length in meters to data, set dec to 1
-  data <- dplyr::mutate(data, tow_length = tow_length)
+    #add tow length in meters to data, set dec to 1
+    data <- dplyr::mutate(data, tow_length = tow_length)
     tdec <- 1
     #data <- format_decimal(data, "tow_length", tdec)
     #data <- as.double(data$tow_length)
 
-  # calculate biodensity
-  data <- dplyr::mutate(data, biodens = data$`Zooplankton Biovol. (ml)`/`tow_length`)
+    # calculate biodensity
+    data <- dplyr::mutate(data, biodens = zooplankton_biovol/tow_length)
+
+  } else {
+    warning("No elg file/directory specified - can't caluculate tow length or biodensity")
+  }
+
 
   # Calculate moon data
   moon_data <- oce::moonAngle(data$dttm,data$lon,data$lat)
@@ -167,7 +195,7 @@ compile_bottle <- function(data, ros_input) {
       }
       # Read in the ros file and combine with datasheet
       ros <- read_ros(file.path(ros_input,ros_file))
-      ros <- mutate(ros, station = stations[i])
+      ros <- dplyr::mutate(ros, station = stations[i])
     } else {
       warning(paste("No .ros file found for station",
                     stations[i]))
@@ -178,7 +206,7 @@ compile_bottle <- function(data, ros_input) {
       if(is.null(ros_output)) {
         ros_output <- ros
       } else {
-        ros_output <- bind_rows(ros_output, ros)
+        ros_output <- dplyr::bind_rows(ros_output, ros)
       }
     }
 
@@ -189,7 +217,7 @@ compile_bottle <- function(data, ros_input) {
   }
 
   # Now that we have our depths and metadata for each bottle in a hydrocast, add all the bucket samples to this
-  bottle_lines <- filter(data, deployment == "B")
+  bottle_lines <- dplyr::filter(data, deployment == "B")
   if(nrow(bottle_lines) > 0) {
     if(!is.null(ros_output)) {
       data_add <- purrr::quietly(tibble::as_tibble)(t(rep(NA_real_, ncol(ros_output))))$result
@@ -198,7 +226,7 @@ compile_bottle <- function(data, ros_input) {
       data_add <- tidyr::uncount(data_add, count)
 
       data_add <- dplyr::mutate(data_add,
-                                bottle = "SS",
+                                bottle = "B",
                                 depth = 0,
                                 temperature = bottle_lines$temp,
                                 pressure = 0,

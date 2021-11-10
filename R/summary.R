@@ -41,7 +41,8 @@
 #' summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
 #' elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
 #' summary <- create_summary(summary_input, elg_input)
-create_summary <- function(summary_input, elg_input, csv_output = "output/csv/summary_datasheet.csv",
+create_summary <- function(summary_input, elg_input,
+                           csv_folder = "output/csv", csv_filename = "summary_datasheet.csv",
                            force_stations = TRUE, cruiseID = NULL, add_cruiseID = TRUE,
                            ...) {
 
@@ -110,7 +111,8 @@ create_summary <- function(summary_input, elg_input, csv_output = "output/csv/su
   }
 
   # Output to csv file as long as the folder name exists and the extension is correct
-  if(!is.null(csv_output)) {
+  if(!is.null(csv_filename) & !is.null(csv_folder)) {
+    csv_output <- file.path(csv_folder, csv_filename)
     # find the file extension of csv_output
     ext <- tools::file_ext(csv_output)
     # test to see if the extension is csv or CSV
@@ -207,14 +209,13 @@ zd_to_tz <- function(zd, format_out = FALSE) {
   tz <- as.numeric(zd) * -1
 
   if(format_out) {
-    if(sign(tz)==0){
-      tz <- "Z"
-    } else {
-      tz <- paste0(ifelse(sign(tz)==1, "+", "-"),
-                       stringr::str_pad(abs(tz),2,pad = "0"),
-                       ":00")
-    }
-
+    timeadd <- paste0(stringr::str_pad(abs(tz),2,pad = "0"),":00")
+    tz <- dplyr::case_when(
+      tz == 0 ~ "Z",
+      sign(tz) == 1 ~ paste0("+", timeadd),
+      sign(tz) == -1 ~ paste0("-", timeadd),
+      TRUE ~ NA_character_
+    )
   } else {
     tz <- as.character(tz)
     ii <- !stringr::str_sub(tz,1,1) == "-"
