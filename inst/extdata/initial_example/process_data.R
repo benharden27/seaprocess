@@ -54,7 +54,7 @@ create_summary(summary_input, elg_folder, cruiseID = cruiseID)
 
 # Neuston datasheet
 create_datasheet(neuston_input, data_type = "neuston",
-                 elg_input = elg_input,
+                 elg_input = elg_folder,
                  cruiseID = cruiseID)
 
 # Bottle datasheet
@@ -62,13 +62,12 @@ create_datasheet(bottle_input, data_type = "bottle",
                  ros_input = ros_folder,
                  cruiseID = cruiseID)
 
-#
-# create_neuston()
-#
-# create_meter()
-#
-# create_bottle()
-#
-# create_ctd()
-#
-# create_other_datasheet()
+# ctd datasheet
+create_datasheet(ctd_input, data_type = "CTD",
+                 cruiseID = cruiseID)
+
+# example of changing output folder/filename for trial runs and specific cases
+create_datasheet(neuston_input, data_type = "neuston",
+                 csv_folder = "~/Desktop/", csv_filename = "test.csv",
+                 elg_input = elg_folder,
+                 cruiseID = cruiseID)
