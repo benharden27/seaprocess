@@ -20,9 +20,17 @@ library(seaprocess)
 # machines and "ctd/Cnv" for data folders in this project directory
 
 cruiseID <- ""
+
 adcp_folder <- "adcp"
 ctd_folder <- "ctd/Cnv"
 elg_folder <- "elg"
+ros_folder <- "ctd/Cnv"
+
+summary_input <- "datasheets/summary_input.xls"
+ctd_input <- "datasheets/ctd_input.xls"
+neuston_input <- "datasheets/neuston_input.xls"
+bottle_input <- "datasheets/bottle_input.xls"
+other_input <- ""
 
 
 
@@ -41,7 +49,19 @@ process_ctd(ctd_folder, cruiseID = cruiseID)
 
 # Process datasheets ------------------------------------------------------
 
-# create_summary()
+create_summary(summary_input, elg_folder, cruiseID = cruiseID)
+
+
+# Neuston datasheet
+create_datasheet(neuston_input, data_type = "neuston",
+                 elg_input = elg_input,
+                 cruiseID = cruiseID)
+
+# Bottle datasheet
+create_datasheet(bottle_input, data_type = "bottle",
+                 ros_input = ros_folder,
+                 cruiseID = cruiseID)
+
 #
 # create_neuston()
 #
