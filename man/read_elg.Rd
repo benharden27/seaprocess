@@ -4,7 +4,15 @@
 \alias{read_elg}
 \title{Read in SEA data from an ELG event file and return a well formatted output}
 \usage{
-read_elg(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, csv_output = NULL)
+read_elg(
+  filein,
+  forceGPS = NULL,
+  preCheck = TRUE,
+  skip = 0,
+  csv_output = NULL,
+  keep = c("dttm", "lon", "lat", "temp", "sal", "fluor", "cdom", "xmiss", "wind_sp",
+    "wind_dir", "heading", "pitch", "roll", "bot_depth", "filename")
+)
 }
 \arguments{
 \item{filein}{Filepath of the elg file to be read in}

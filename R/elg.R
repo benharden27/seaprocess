@@ -16,7 +16,12 @@
 #' @examples
 #' read_elg()
 #'
-read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, csv_output = NULL) {
+read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
+                     csv_output = NULL,
+                     keep = c("dttm","lon","lat","temp","sal","fluor",
+                              "cdom","xmiss","wind_sp","wind_dir",
+                              "heading","pitch","roll","bot_depth",
+                              "filename")) {
 
   # TODO: add in minor interpolation for short gaps of missing values
 
@@ -152,6 +157,10 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0, csv_out
   # add column with filename
   file <- tail(stringr::str_split(filein, "/")[[1]],1)
   df <- dplyr::mutate(df, filename = file)
+
+  # just keep the specified column names
+  colkeep <- colnames(df) %in% keep
+  df <- df[, colkeep]
 
   if(!is.null(csv_output)) {
     readr::write_csv(data,csv_output, na = "")
@@ -388,7 +397,11 @@ average_elg <- function(data, average_window = 60) {
 
   data <- dplyr::mutate(data, roundtime = lubridate::round_date(dttm, unit = paste(average_window,"minute")))
   data <- dplyr::group_by(data, roundtime)
-  data_out <- dplyr::summarise(data, dplyr::across(tidyselect::vars_select_helpers$where(is.numeric), ~mean(.x, na.rm = TRUE)))
+  data_out <- dplyr::summarise(data,
+                               dplyr::across(tidyselect::vars_select_helpers$where(is.numeric), ~mean(.x, na.rm = TRUE)),
+                               n = dplyr::n(),
+                               filename_first = dplyr::first(filename),
+                               filename_last = dplyr::last(filename))
 
   data_out <- dplyr::mutate(data_out, dttm = roundtime, .before=1)
   data_out <- dplyr::select(data_out, -roundtime)
@@ -427,6 +440,9 @@ fill_time_gaps <- function(data, average_window) {
     names(na_row_add) <- names(data)
     na_row_add <- dplyr::mutate(na_row_add, count = length(times_to_fill))
     na_tibble_add <- tidyr::uncount(na_row_add, count)
+    na_tibble_add <- dplyr::mutate(na_tibble_add,
+                                   filename_first = NA_character_,
+                                   filename_last = NA_character_)
 
     # add the missing times to the datetime column and add to the original data
     na_tibble_add$dttm <- times_to_fill
