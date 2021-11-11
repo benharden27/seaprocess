@@ -112,8 +112,8 @@ format_elg_odv <- function(data, odv_output = NULL ,cruiseID = NULL) {
                                 `Wind Direction [deg]` = data$wind_dir,
                                 `Wind-E/W Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$u,
                                 `Wind-N/S Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$v,
-                                `CDOM` = data$cdom_1min,
-                                `Xmiss` = data$xmiss_1min)
+                                `CDOM` = data$cdom,
+                                `Xmiss` = data$xmiss)
 
   write_odv(odv_out, odv_output)
 

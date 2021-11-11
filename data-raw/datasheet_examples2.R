@@ -1,3 +1,7 @@
+elg_input <- "inst/extdata/initial_example/elg/"
+a <- process_elg(elg_folder = elg_input)
+
+
 summary_input <- "inst/extdata/initial_example/datasheets/summary_input.xls"
 elg_input <- "inst/extdata/initial_example/elg/"
 csv_output <- "inst/extdata/initial_example/datasheets/summary.csv"
