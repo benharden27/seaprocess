@@ -2,22 +2,16 @@
 % Please edit documentation in R/odv.R
 \name{format_odv}
 \alias{format_odv}
-\title{Format}
+\title{Wrapper function to format any odv file}
 \usage{
-format_odv(
-  data,
-  folder,
-  fields = c("hourly", "surfsamp", "neuston", "adcp", "ctd", "hydro"),
-  import = FALSE,
-  ...
-)
+format_odv(data, odv_output, data_type = "CTD", cruiseID = NULL)
 }
 \arguments{
-\item{folder}{}
+\item{cruiseID}{}
 }
 \value{
 
 }
 \description{
-Format
+Wrapper function to format any odv file
 }

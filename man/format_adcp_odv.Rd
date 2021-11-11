@@ -4,7 +4,7 @@
 \alias{format_adcp_odv}
 \title{Format ADCP Data for ODV inport}
 \usage{
-format_adcp_odv(data, output_odv, cruiseID = NULL)
+format_adcp_odv(data, odv_output, cruiseID = NULL)
 }
 \arguments{
 \item{data}{}

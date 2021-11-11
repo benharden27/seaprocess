@@ -4,7 +4,7 @@
 \alias{format_elg_odv}
 \title{Format Hourly Data for ODV inport}
 \usage{
-format_elg_odv(data, output_odv = NULL, cruiseID = NULL)
+format_elg_odv(data, odv_output = NULL, cruiseID = NULL)
 }
 \arguments{
 \item{data}{}

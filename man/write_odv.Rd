@@ -4,7 +4,7 @@
 \alias{write_odv}
 \title{Write formatted data to odv txt file}
 \usage{
-write_odv(odv_out, output_odv = NULL)
+write_odv(odv_out, odv_output = NULL)
 }
 \arguments{
 \item{odv_output}{}

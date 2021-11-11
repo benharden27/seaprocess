@@ -24,15 +24,17 @@ process_adcp <- function(adcp_folder, cruiseID = NULL,
 
   # write adcp data to csv
   # add cruise ID to default output if not already existing
-  if(add_cruiseID) {
-    csv_filename <- add_file_cruiseID(csv_filename, cruiseID)
+  if(!is.null(csv_filename) & !is.null(csv_folder)) {
+    csv_output <- file.path(csv_folder, csv_filename)
+    if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+      csv_output <- add_file_cruiseID(csv_output, cruiseID)
+    }
+    safely_write_csv(adcp, csv_output)
   }
-  # write file
-  safely_write_csv(adcp, file.path(csv_folder,csv_filename))
 
   # Convert adcp to odv output
   if(!is.null(odv_folder)) {
-    format_adcp_odv(adcp, file.path(odv_folder,odv_filename), cruiseID = cruiseID)
+    format_odv(adcp, file.path(odv_folder,odv_filename), data_type = "adcp", cruiseID = cruiseID)
   }
 }
 
@@ -60,15 +62,21 @@ process_elg <- function(elg_folder, cruiseID = NULL,
 
   # Output csv file
   # add cruise ID to default output if not already existing
-  if(add_cruiseID) {
-    csv_filename <- add_file_cruiseID(csv_filename, cruiseID)
+  if(!is.null(csv_filename) & !is.null(csv_folder)) {
+    csv_output <- file.path(csv_folder, csv_filename)
+    if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+      csv_output <- add_file_cruiseID(csv_output, cruiseID)
+    }
+    safely_write_csv(elg, csv_output)
   }
-  # write file
-  safely_write_csv(elg, file.path(csv_folder,csv_filename))
 
   # output odv file
-  if(!is.null(odv_folder)) {
-    format_elg_odv(elg, file.path(odv_folder,odv_filename), cruiseID = cruiseID)
+  if(!is.null(odv_filename) & !is.null(odv_folder)) {
+    odv_output <- file.path(odv_folder, odv_filename)
+    if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+      odv_output <- add_file_cruiseID(odv_output, cruiseID)
+    }
+    format_odv(elg, file.path(odv_folder,odv_filename), data_type = "elg", cruiseID = cruiseID)
   }
 
   return(elg)
@@ -92,15 +100,26 @@ process_ctd <- function(ctd_folder, cruiseID = NULL,
                         odv_folder = "output/odv/ctd", odv_filename = "ctd.txt",
                         add_cruiseID = TRUE, ...) {
 
-  #
+  # create data
   ctd <- read_ctd_fold(ctd_folder, cruiseID = cruiseID, ...)
-  if(add_cruiseID) {
-    csv_filename <- add_file_cruiseID(csv_filename, cruiseID)
-  }
-  safely_write_csv(ctd, file.path(csv_folder,csv_filename))
 
-  if(!is.null(odv_folder)) {
-    format_ctd_odv(ctd, file.path(odv_folder,odv_filename), cruiseID = cruiseID)
+  # output to csv
+  if(!is.null(csv_filename) & !is.null(csv_folder)) {
+    csv_output <- file.path(csv_folder, csv_filename)
+    if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+      csv_output <- add_file_cruiseID(csv_output, cruiseID)
+    }
+    safely_write_csv(ctd, csv_output)
+  }
+
+
+  # output odv
+  if(!is.null(odv_filename) & !is.null(odv_folder)) {
+    odv_output <- file.path(odv_folder, odv_filename)
+    if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+      odv_output <- add_file_cruiseID(odv_output, cruiseID)
+    }
+    format_odv(ctd, file.path(odv_folder,odv_filename), data_type = "ctd", cruiseID = cruiseID)
   }
 
 }
@@ -115,30 +134,5 @@ safely_write_csv <- function(data, csv_filepath = NULL) {
       message("Couldn't export the data to a csv file. Most likely specified directory doesn't exist")
     }
   }
-
-}
-
-
-process_datasheet <- function(datasheet_input, summary_csv,
-                              data_type = "CTD", ...) {
-
-
-
-
-}
-
-
-add_file_cruiseID <- function(filename, cruiseID) {
-
-  if(!is.null(filename) & !is.null(cruiseID)) {
-    file_dir <- dirname(filename)
-    filename <- basename(filename)
-    filename <- paste0(cruiseID,"_",filename)
-    filename <- file.path(file_dir,filename)
-  } else {
-    stop("filename or cruiseID are not set")
-  }
-
-  return(filename)
 
 }

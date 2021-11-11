@@ -10,9 +10,12 @@ create_datasheet(
   data_type = "CTD",
   csv_folder = "output/csv",
   csv_filename = "datasheet.csv",
+  odv_folder = "output/odv",
+  odv_filename = "datasheet.txt",
   cruiseID = NULL,
   add_cruiseID = TRUE,
   add_deployment_type = TRUE,
+  add_deployment_subfold = TRUE,
   ...
 )
 }

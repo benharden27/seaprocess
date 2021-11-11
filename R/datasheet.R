@@ -12,8 +12,10 @@
 create_datasheet <- function(data_input, summary_input = "output/csv/summary_datasheet.csv",
                              data_type = "CTD",
                              csv_folder = "output/csv", csv_filename = "datasheet.csv",
+                             odv_folder = "output/odv", odv_filename = "datasheet.txt",
                              cruiseID = NULL, add_cruiseID = TRUE,
-                             add_deployment_type = TRUE, ...) {
+                             add_deployment_type = TRUE,
+                             add_deployment_subfold = TRUE, ...) {
 
   if(add_cruiseID == TRUE & !is.null(cruiseID)) {
     if(summary_input == "output/csv/summary_datasheet.csv") {
@@ -21,26 +23,47 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
     }
   }
 
+
+  odv_export <- FALSE
   if(data_type == "bottle") {
-    data_type <- c("HC","B")
+
     if(add_deployment_type) {
       csv_filename <- paste0("bottle_", csv_filename)
+      odv_filename <- paste0("bottle_", odv_filename)
     }
-  } else if(data_type == "neuston") {
-    data_type <- "NT"
+    odv_export <- TRUE
+    if(add_deployment_subfold) {
+      odv_folder <- file.path(odv_folder,"bottle")
+    }
+    data_type <- c("HC","B")
+
+  } else if (data_type == "neuston") {
+
     if(add_deployment_type) {
       csv_filename <- paste0("neuston_", csv_filename)
+      odv_filename <- paste0("neuston_", odv_filename)
     }
-  } else if(data_type == "CTD") {
+    odv_export <- TRUE
+    if(add_deployment_subfold) {
+      odv_folder <- file.path(odv_folder,"neuston")
+    }
+    data_type <- "NT"
+
+  } else if (data_type == "CTD") {
     data_type <- c("CTD","HC")
     if(add_deployment_type) {
       csv_filename <- paste0("ctd_", csv_filename)
+      odv_filename <- paste0("ctd_", odv_filename)
     }
   } else {
     if(add_deployment_type) {
       csv_filename <- paste0(stringr::str_to_lower(data_type), "_", csv_filename)
+      odv_filename <- paste0(stringr::str_to_lower(data_type), "_", odv_filename)
     }
   }
+
+
+
 
   # read in the data_input excel sheet datasheet
   data <- readxl::read_excel(data_input)
@@ -99,6 +122,19 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
     }
     readr::write_csv(format_csv_output(data),csv_output, na = "")
   }
+
+  # export to odv
+  if(odv_export) {
+    if(!is.null(odv_filename) & !is.null(odv_folder)) {
+      odv_output <- file.path(odv_folder, odv_filename)
+      if(add_cruiseID == TRUE & !is.null(cruiseID)) {
+        odv_output <- add_file_cruiseID(odv_output, cruiseID)
+      }
+      format_odv(data, odv_output, data_type = data_type, cruiseID = cruiseID)
+    }
+  }
+
+
 
   return(data)
 

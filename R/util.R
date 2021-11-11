@@ -63,3 +63,19 @@ uv_to_wswd <- function(u,v) {
 }
 
 DIM <- function(x) if(is.null(dim(x))) length(x) else dim(x)
+
+
+add_file_cruiseID <- function(filename, cruiseID) {
+
+  if(!is.null(filename) & !is.null(cruiseID)) {
+    file_dir <- dirname(filename)
+    filename <- basename(filename)
+    filename <- paste0(cruiseID,"_",filename)
+    filename <- file.path(file_dir,filename)
+  } else {
+    stop("filename or cruiseID are not set")
+  }
+
+  return(filename)
+
+}
