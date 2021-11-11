@@ -75,6 +75,7 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
     data <- dplyr::mutate(data, deployment = ifelse(is.na(as.numeric(bottle)) | as.numeric(bottle) > 12, "B", "HC"))
 
     data <- dplyr::right_join(summary, data, by=c("station","deployment"))
+
     data <- compile_bottle(data, ...)
 
   } else {
@@ -84,7 +85,7 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
 
   # Neuston specific stuff
   if(sum(data_type %in% "NT")>0) {
-    data <- compile_neuston(data, ...)
+    data <- compile_neuston(data)
   }
 
   # Remove columns we don't need, e.g. deployment
@@ -105,44 +106,14 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
 
 #' @export
 #' @rdname compile_neuston
-compile_neuston <- function(data, elg_input) {
+compile_neuston <- function(data) {
 
-  # WORK OUT TOW DISTANCE AND ASSIGN TOW LENGTH
-  # find out time_out in UTC
-  time_diff <- lubridate::time_length(lubridate::hms(data$time_out) - lubridate::hms(data$time_in), unit= "minutes")
-  time_diff[time_diff<0] <- time_diff[time_diff<0] + 60 * 24
-  data <- dplyr::mutate(data,dttm_out = dttm + lubridate::minutes(time_diff))
-
-  if(!is.null(elg_input)) {
-    # read in elg
-    elg <- get_elg(elg_input)
-
-    # find nearest points and calculate along-path distance
-    sti <- find_near(elg$dttm, data$dttm)
-    eni <- find_near(elg$dttm, data$dttm_out)
-    tow_length <- rep(NA, length(sti))
-    for (i in 1:length(sti)) {
-      tow_length[i] <- tail(
-        oce::geodDist(
-          elg$lon[sti[i]:eni[i]],
-          elg$lat[sti[i]:eni[i]],
-          alongPath = TRUE),1)
-    }
-
-
-    #add tow length in meters to data, set dec to 1
-    data <- dplyr::mutate(data, tow_length = tow_length)
-    tdec <- 1
-    #data <- format_decimal(data, "tow_length", tdec)
-    #data <- as.double(data$tow_length)
-
-    # calculate biodensity
-    data <- dplyr::mutate(data, biodens = zooplankton_biovol/tow_length)
-
-  } else {
-    warning("No elg file/directory specified - can't caluculate tow length or biodensity")
+  # calculate biodensity
+  if(length(which(is.na(data$station_distance)))>0) {
+    warning("One or more tow distances are not available - be sure that they exist in the summary data csv")
   }
-
+  data <- dplyr::mutate(data, biodens = zooplankton_biovol/(station_distance/1000))
+  data <- dplyr::relocate(data, biodens, .after = zooplankton_biovol)
 
   # Calculate moon data
   moon_data <- oce::moonAngle(data$dttm,data$lon,data$lat)
@@ -153,7 +124,6 @@ compile_neuston <- function(data, elg_input) {
                         moon_risen = moon_data$altitude > 0)
   nodec <- 0
   data <- format_decimal(data, "moon_phase", nodec)
-
 
   return(data)
 }

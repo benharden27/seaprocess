@@ -1,7 +1,7 @@
 summary_input <- "inst/extdata/initial_example/datasheets/summary_input.xls"
 elg_input <- "inst/extdata/initial_example/elg/"
 csv_output <- "inst/extdata/initial_example/datasheets/summary.csv"
-create_summary(summary_input = summary_input,
+a <- create_summary(summary_input = summary_input,
                elg_input = elg_input,
                csv_folder = "~/Desktop",
                csv_filename = "summary.csv")
@@ -37,5 +37,4 @@ a <- create_datasheet(data_input,
                       summary_input,
                       csv_folder = "~/Desktop",
                       csv_filename = "test.csv",
-                      data_type = data_type,
-                      elg_input = elg_input)
+                      data_type = data_type)

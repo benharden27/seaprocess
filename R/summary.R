@@ -43,7 +43,7 @@
 #' summary <- create_summary(summary_input, elg_input)
 create_summary <- function(summary_input, elg_input,
                            csv_folder = "output/csv", csv_filename = "summary_datasheet.csv",
-                           force_stations = TRUE, cruiseID = NULL, add_cruiseID = TRUE,
+                           force_stations = TRUE, cruiseID = NULL, add_cruiseID = TRUE, magdiff = 60,
                            ...) {
 
   # read in the summary_input xlsx file
@@ -60,27 +60,30 @@ create_summary <- function(summary_input, elg_input,
   elg <- get_elg(elg_input)
 
   # filter out rows for which there is data hand-entered
-  summary_hand_enter <- dplyr::filter(summary, !dplyr::if_all(lon:fluor,is.na))
-  summary <- dplyr::filter(summary, dplyr::if_all(lon:fluor,is.na))
-  summary <- dplyr::select(summary, !c(lon,lat,temp,sal,fluor))
+  summary_hand_enter <- dplyr::filter(summary, !dplyr::if_all(lon:station_distance,is.na))
+  summary <- dplyr::filter(summary, dplyr::if_all(lon:station_distance,is.na))
+  summary <- dplyr::select(summary, !c(lon,lat,temp,sal,fluor,station_distance))
 
   # find all the nearest date time values of summary sheet to the elg file and add these indeces
   # TODO: what happens if any of ii are blank or at beginning or end of the elg?
   # TODO: add fail safe to ensure that times are actually close
   ii <- find_near(elg$dttm, summary$dttm)
 
-  # Check to see if the time difference is greater than 60 seconds
+  # find which values align closer than 60 seconds
   diff_time <- elg$dttm[ii] - summary$dttm
-  iii <- which(diff_time > 60)
+  iii <- which(diff_time > magdiff)
+
   if(length(iii) > 0) {
-    message <- paste("The following stations are more than 60 seconds from nearest elg reading:",
-                     paste0(summary$station[iii], "-", summary$deployment[iii], ": ", diff_time[[iii]], " seconds"),
+    message <- paste("The following stations are more than",
+                     magdiff,
+                     "seconds from nearest elg reading:",
+                     paste0(summary$station[iii], "-", summary$deployment[iii], ": ", diff_time[iii], " seconds"),
                      sep = "\n")
 
     if(force_stations) {
       warning(paste(message,
-              "Setting the station metadata to NA and continuing to run. Run create_summary() without force_stations = TRUE to force a stop here",
-              sep = "\n"))
+                    "Setting the station metadata to NA and continuing to run. Run create_summary() without force_stations = TRUE to force a stop here",
+                    sep = "\n"))
       ii[iii] <- NA
     } else {
       stop(paste(message,
@@ -89,20 +92,49 @@ create_summary <- function(summary_input, elg_input,
     }
   }
 
+  # Calculate the station distance by extracting the lon/lat along path
+  # First, build the dttm_out
+  time_diff <- lubridate::time_length(lubridate::hm(summary$time_out) - lubridate::hm(summary$time_in), unit= "minutes")
+  time_diff[time_diff<0 & !is.na(time_diff)] <- time_diff[time_diff<0 & !is.na(time_diff)] + 60 * 24
+  summary <- dplyr::mutate(summary,dttm_out = dttm + lubridate::minutes(time_diff))
+
+
+  # find nearest points and calculate along-path distance
+  sti <- find_near(elg$dttm, summary$dttm)
+  eni <- find_near(elg$dttm, summary$dttm_out)
+  sti[iii] <- NA
+
+  tow_length <- rep(NA, length(sti))
+  for (i in 1:length(sti)) {
+    if(is.na(eni[i])) {
+      next
+    }
+    tow_length[i] <- tail(
+      oce::geodDist(
+        elg$lon[sti[i]:eni[i]],
+        elg$lat[sti[i]:eni[i]],
+        alongPath = TRUE),1)
+  }
+
+  #add tow length in meters to data
+  summary <- dplyr::mutate(summary, station_distance = tow_length*1000)
+  summary <- dplyr::select(summary, -dttm_out)
+
 
   # extract these values and add to the right of summary
   # TODO: make the outputs selectable when you run the function
   elg_to_add <- dplyr::select(elg[ii,], lon, lat, temp, sal, fluor)
-  summary <- dplyr::bind_cols(summary,elg_to_add)
+  summary <- dplyr::bind_cols(summary, elg_to_add)
 
   # add back in the hand entered values
   if(nrow(summary_hand_enter)>0) {
-    summary_hand_enter <- dplyr::mutate(summary_hand_enter,dplyr::across(lon:fluor,as.numeric))
+    summary_hand_enter <- dplyr::mutate(summary_hand_enter,dplyr::across(lon:station_distance,as.numeric))
     summary <- dplyr::bind_rows(summary, summary_hand_enter)
   }
 
-  # sort by station
+  # sort by station and relocate distance to end
   summary <- dplyr::arrange(summary, dttm)
+  summary <- dplyr::relocate(summary, station_distance, .after = tidyselect::last_col())
 
   # check to ensure that there are no duplicate deployments for any one station
   duplicated_deployments <- dplyr::n_groups(dplyr::group_by(summary, station, deployment)) != nrow(summary)
@@ -247,3 +279,14 @@ get_elg <- function(elg_input) {
 
   return(elg)
 }
+
+
+find_tow_length <- function(elg, summary, ii) {
+
+
+
+  return(summary)
+
+
+}
+

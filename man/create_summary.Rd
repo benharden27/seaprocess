@@ -12,6 +12,7 @@ create_summary(
   force_stations = TRUE,
   cruiseID = NULL,
   add_cruiseID = TRUE,
+  magdiff = 60,
   ...
 )
 }
