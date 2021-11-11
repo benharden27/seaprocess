@@ -52,7 +52,8 @@ initialize_master <- function(path, cruiseID = NULL,
 
   ## TODO append cruise ID to all files
   cruise <- basename(path)
-  old_names <- list.files(path, full.names = T, recursive = T)
+  old_names <- c(list.files(file.path(path,"datasheets"), full.names = T, recursive = T),
+                 list.files(path, full.names = T, recursive = F, pattern = "*.R"))
   new_names <- file.path(dirname(old_names),paste0(cruiseID,"_",basename(old_names)))
   file.rename(old_names, new_names)
 
