@@ -54,7 +54,6 @@ create_summary(summary_input, elg_folder, cruiseID = cruiseID)
 
 # Neuston datasheet
 create_datasheet(neuston_input, data_type = "neuston",
-                 elg_input = elg_folder,
                  cruiseID = cruiseID)
 
 # Bottle datasheet
