@@ -195,7 +195,7 @@ compile_meter <- function(data) {
                                                   tow_volume),
                         .after = net_area)
 
-  data <- dplyr::mutate(data, biodens = zooplankton_biovol/tow_volume, .after = zooplankton_biovol)
+  data <- dplyr::mutate(data, biodens = as.numeric(zooplankton_biovol)/tow_volume, .after = zooplankton_biovol)
 
 }
 

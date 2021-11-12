@@ -30,6 +30,7 @@ summary_input <- "datasheets/summary_input.xls"
 ctd_input <- "datasheets/ctd_input.xls"
 neuston_input <- "datasheets/neuston_input.xls"
 bottle_input <- "datasheets/bottle_input.xls"
+meter_input <- "datasheets/meter_input.xls"
 other_input <- ""
 
 
@@ -65,8 +66,11 @@ create_datasheet(bottle_input, data_type = "bottle",
 create_datasheet(ctd_input, data_type = "CTD",
                  cruiseID = cruiseID)
 
+# meternet datasheet
+create_datasheet(meter_input, data_type = "meter",
+                 cruiseID = cruiseID)
+
 # example of changing output folder/filename for trial runs and specific cases
 create_datasheet(neuston_input, data_type = "neuston",
                  csv_folder = "~/Desktop/", csv_filename = "test.csv",
-                 elg_input = elg_folder,
                  cruiseID = cruiseID)
