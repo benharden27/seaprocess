@@ -1,9 +1,29 @@
 #' Create complete data sheet
 #'
-#' @param data_input
-#' @param summary
-#' This function reads in a hand-entered excel sheet along with the summary CSV and produces a well formated CSV with all the relevent data
-#' and meta data.
+#' This function reads in a hand-entered excel data sheet along with a station
+#' summary csv and combines them to produce well-formatted csv and odv file
+#' outputs.
+#'
+#' data_input is the only argument that the function *needs* to create an output. The default values for summary_input and the csv and odv outputs are set to work with the default directory configuration of the SEA cruise project so shouldn't need to be set unless you are trying to produce alternative outputs for specific custom cases.
+#'
+#' @param data_input Filepath for the xls file with hand-recorded data values
+#' @param summary_input Filepath for the csv summary datasheet produced with
+#'   create_summary() (see details below)
+#' @param data_type The data type code that will draw data from the summary
+#'   sheet (see details below)
+#' @param csv_folder The directory path to output the csv file. Set to NULL for
+#'   no csv output.
+#' @param csv_filename The csv filename to output the data
+#' @param odv_folder The directory path to output the odv file. Set to NULL for
+#'   no odv output.
+#' @param odv_filename The odv .txt filename to output the data
+#' @param cruiseID Optional string specifying cruise ID (i.e. "S301")
+#' @param add_cruise_ID If cruiseID is set, logical to specify whether cruiseID
+#'   should be appended to beginning of filenames for csv and odv output
+#' @param add_deployment_type logical to tell function whether to add a new
+#'   directory to the end of the odv_folder directory path to keep .txt files
+#'   separate. Will create the new directory name depending on data_type
+#'
 #'
 #' @return
 #' @export
@@ -55,6 +75,17 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
       csv_filename <- paste0("ctd_", csv_filename)
       odv_filename <- paste0("ctd_", odv_filename)
     }
+  } else if (data_type == "meter") {
+
+    if(add_deployment_type) {
+      csv_filename <- paste0("meter_", csv_filename)
+      odv_filename <- paste0("meter_", odv_filename)
+    }
+    odv_export <- TRUE
+    if(add_deployment_subfold) {
+      odv_folder <- file.path(odv_folder,"meter")
+    }
+    data_type <- c("MN")
   } else {
     if(add_deployment_type) {
       csv_filename <- paste0(stringr::str_to_lower(data_type), "_", csv_filename)
@@ -111,6 +142,11 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
     data <- compile_neuston(data)
   }
 
+  # Neuston specific stuff
+  if(sum(data_type %in% c("MN","2MN")) > 0) {
+    data <- compile_meter(data)
+  }
+
   # Remove columns we don't need, e.g. deployment
   data <- dplyr::select(data, -deployment)
 
@@ -139,6 +175,30 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
   return(data)
 
 }
+
+
+compile_meter <- function(data) {
+
+
+  data <- dplyr::mutate(data, total_flow = ifelse(is.na(total_flow),
+                                                  flow_out - flow_in,
+                                                  total_flow),
+                        .after = flow_in)
+
+  data <- dplyr::mutate(data, tow_length = ifelse(is.na(tow_length),
+                                                  total_flow * flow_constant,
+                                                  tow_length),
+                        .after = flow_constant)
+
+  data <- dplyr::mutate(data, tow_volume = ifelse(is.na(tow_volume),
+                                                  tow_length * net_area,
+                                                  tow_volume),
+                        .after = net_area)
+
+  data <- dplyr::mutate(data, biodens = zooplankton_biovol/tow_volume, .after = zooplankton_biovol)
+
+}
+
 
 #' @export
 #' @rdname compile_neuston

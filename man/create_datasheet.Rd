@@ -20,12 +20,41 @@ create_datasheet(
 )
 }
 \arguments{
-\item{summary}{This function reads in a hand-entered excel sheet along with the summary CSV and produces a well formated CSV with all the relevent data
-and meta data.}
+\item{data_input}{Filepath for the xls file with hand-recorded data values}
+
+\item{summary_input}{Filepath for the csv summary datasheet produced with
+create_summary() (see details below)}
+
+\item{data_type}{The data type code that will draw data from the summary
+sheet (see details below)}
+
+\item{csv_folder}{The directory path to output the csv file. Set to NULL for
+no csv output.}
+
+\item{csv_filename}{The csv filename to output the data}
+
+\item{odv_folder}{The directory path to output the odv file. Set to NULL for
+no odv output.}
+
+\item{odv_filename}{The odv .txt filename to output the data}
+
+\item{cruiseID}{Optional string specifying cruise ID (i.e. "S301")}
+
+\item{add_deployment_type}{logical to tell function whether to add a new
+directory to the end of the odv_folder directory path to keep .txt files
+separate. Will create the new directory name depending on data_type}
+
+\item{add_cruise_ID}{If cruiseID is set, logical to specify whether cruiseID
+should be appended to beginning of filenames for csv and odv output}
 }
 \value{
 
 }
 \description{
-Create complete data sheet
+This function reads in a hand-entered excel data sheet along with a station
+summary csv and combines them to produce well-formatted csv and odv file
+outputs.
+}
+\details{
+data_input is the only argument that the function *needs* to create an output. The default values for summary_input and the csv and odv outputs are set to work with the default directory configuration of the SEA cruise project so shouldn't need to be set unless you are trying to produce alternative outputs for specific custom cases.
 }
