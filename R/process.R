@@ -4,14 +4,31 @@
 
 #' Master processing function for ADCP data
 #'
-#' @param adcp_folder
-#' @param csv_folder
-#' @param odv_folder
-#' @param cruiseID
-#' @param ...
+#' Function takes in a filepath to a folder containing the cruise adcp files,
+#' reads them in, combines them into one data object and then exports to a
+#' comma-separated-file and an odv text file.
+#'
+#' Most likely optional arguments to go in for ...
+#'
+#' @param adcp_folder filepath to the folder containing adcp files
+#' @param cruiseID Optional string specifying cruise ID (i.e. "S301")
+#' @param csv_folder The directory path to output the csv file. Set to NULL for
+#'   no csv output.
+#' @param csv_filename The csv filename to output the data
+#' @param odv_folder The directory path to output the odv file. Set to NULL for
+#'   no odv output.
+#' @param odv_filename The odv .txt filename to output the data
+#' @param add_cruise_ID If cruiseID is set, logical to specify whether cruiseID
+#'   should be appended to beginning of filenames for csv and odv output
+#' @param ... option arguments to be passed to [read_adcp_fold()]. A few
+#'   options, but most likely is the file_type which defaults to '.LTA' (long
+#'   term averages), but can be changed to ".STA" if you want to read in the
+#'   short term averages
 #'
 #' @return
 #' @export
+#'
+#' @md
 #'
 #' @examples
 process_adcp <- function(adcp_folder, cruiseID = NULL,
@@ -40,8 +57,26 @@ process_adcp <- function(adcp_folder, cruiseID = NULL,
 
 #' Master processing function for event data
 #'
-#' @param elg_folder
-#' @param output_file
+#' Function takes in a filepath to a folder containing the cruise elg files,
+#' reads them in, combines them into one data object and then exports to a
+#' comma-separated-file and an odv text file.
+#'
+#' Note that the elg folder doesn not have to solely contain elg files, the
+#' reading function will find all the elg files amoungst the other files
+#' exported by SCS
+#'
+#' @param elg_folder filepath to the folder containg elg files
+#' @param cruiseID Optional string specifying cruise ID (i.e. "S301")
+#' @param csv_folder The directory path to output the csv file. Set to NULL for
+#'   no csv output.
+#' @param csv_filename The csv filename to output the data
+#' @param odv_folder The directory path to output the odv file. Set to NULL for
+#'   no odv output.
+#' @param odv_filename The odv .txt filename to output the data
+#' @param add_cruise_ID If cruiseID is set, logical to specify whether cruiseID
+#'   should be appended to beginning of filenames for csv and odv output
+#' @param average_window the averaging window in minutes for the exported file.
+#'   Set to NULL for no averaging. Default is 60 minutes.
 #'
 #' @return
 #' @export
@@ -85,11 +120,25 @@ process_elg <- function(elg_folder, cruiseID = NULL,
 
 #' Master processing function for ctd data
 #'
-#' @param ctd_folder
-#' @param csv_folder
-#' @param odv_folder
-#' @param cruiseID
-#' @param ...
+#' Function takes in a filepath to a folder containing the cruise cnv CTD files,
+#' reads them in, combines them into one data object and then exports to a
+#' comma-separated-file and an odv text file.
+#'
+#' @param ctd_folder filepath to the folder containing ctd cnv files
+#' @param cruiseID Optional string specifying cruise ID (i.e. "S301")
+#' @param csv_folder The directory path to output the csv file. Set to NULL for
+#'   no csv output.
+#' @param csv_filename The csv filename to output the data
+#' @param odv_folder The directory path to output the odv file. Set to NULL for
+#'   no odv output.
+#' @param odv_filename The odv .txt filename to output the data
+#' @param add_cruise_ID If cruiseID is set, logical to specify whether cruiseID
+#'   should be appended to beginning of filenames for csv and odv output
+#' @param ... optional arguments passed to [read_ctd_fold()]. Most likely one
+#'   you'd set would be the depth_step which is the depth resolution of output
+#'   data in meters. Default is 1m.
+#'
+#' @md
 #'
 #' @return
 #' @export

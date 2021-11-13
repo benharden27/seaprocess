@@ -4,7 +4,16 @@
 \alias{read_ctd}
 \title{Read and process CTD data}
 \usage{
-read_ctd(cnv_file, pmin = 5, p = 1, to_tibble = TRUE, cruiseID = NULL, ...)
+read_ctd(
+  cnv_file,
+  pmin = 5,
+  p = 1,
+  to_tibble = TRUE,
+  cruiseID = NULL,
+  depth_vec = NULL,
+  depth_step = 1,
+  ...
+)
 }
 \arguments{
 \item{cnv_file}{file path to the CNV file to be read}

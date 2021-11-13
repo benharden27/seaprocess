@@ -2,7 +2,7 @@
 % Please edit documentation in R/datasheet.R
 \name{create_datasheet}
 \alias{create_datasheet}
-\title{Create complete data sheet}
+\title{Create complete data sheet from xls input}
 \usage{
 create_datasheet(
   data_input,
@@ -44,11 +44,15 @@ no odv output.}
 directory to the end of the odv_folder directory path to keep .txt files
 separate. Will create the new directory name depending on data_type}
 
+\item{...}{option arguments to be sent to compile_bottle. Initially, this is
+just ros_input}
+
 \item{add_cruise_ID}{If cruiseID is set, logical to specify whether cruiseID
 should be appended to beginning of filenames for csv and odv output}
 }
 \value{
-
+If assigned to an object, the function will return the formatted
+tibble that was exported to csv
 }
 \description{
 This function reads in a hand-entered excel data sheet along with a station
@@ -56,5 +60,19 @@ summary csv and combines them to produce well-formatted csv and odv file
 outputs.
 }
 \details{
-data_input is the only argument that the function *needs* to create an output. The default values for summary_input and the csv and odv outputs are set to work with the default directory configuration of the SEA cruise project so shouldn't need to be set unless you are trying to produce alternative outputs for specific custom cases.
+data_input is the only argument that the function \emph{needs} to create an
+output. The default values for summary_input and the csv and odv outputs are
+set to work with the default directory configuration of the SEA cruise
+project so shouldn't need to be set unless you are trying to produce
+alternative outputs for specific custom cases.
+
+data_type can be either a stand-alone value entered into the deployment
+column of the station summary sheet. Or it can take one of these special
+cases:
+\itemize{
+\item "neuston" for neuston datasheets
+\item "CTD" for ctd datasheets
+\item "bottle" for bottle datasheets
+\item "meter" for meter net datasheets
+}
 }

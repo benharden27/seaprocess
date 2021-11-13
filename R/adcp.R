@@ -109,11 +109,21 @@ read_adcp <- function(adcp_file, calc_echo = FALSE, to_tibble = TRUE) {
 #' @export
 #'
 #' @examples
-read_adcp_fold <- function(adcp_fold, file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
+read_adcp_fold <- function(adcp_fold, file_type = c(".LTA",".STA"),
                                file_select = NULL, calc_echo = FALSE,
                                combine = FALSE, combine_na = TRUE, sort_dttm = FALSE, ...) {
 
-  files <- list.files(adcp_fold,file_type)
+  files <- NULL
+  i <- 1
+  while(length(files) == 0 & i <= length(file_type)) {
+    files <- list.files(adcp_fold,file_type[i])
+    i <- i+1
+  }
+
+  if(length(files) == 0) {
+    stop("No adcp files of specified file_type found in folder")
+  }
+
 
   if(!is.null(file_select))
     files <- files[select]

@@ -4,7 +4,7 @@
 \alias{interpolate_depth}
 \title{Interpolate a ctd tibble on a regular pressure grid to a regular dept grid}
 \usage{
-interpolate_depth(ctd_tibble, depth_vec = NULL)
+interpolate_depth(ctd_tibble, depth_vec = NULL, depth_step = 1)
 }
 \arguments{
 \item{depth_vec}{}

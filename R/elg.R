@@ -390,6 +390,11 @@ create_gps_dttm <- function(gps_time, sys_dttm) {
 #' @examples
 average_elg <- function(data, average_window = 60) {
 
+  if(is.null(average_window)) {
+    message("No time averaging applied to elg output data")
+    return(data)
+  }
+
   if(average_window<2) {
     warning("Cannot average data to window smaller than 2 minutues - returning original data")
     return(data)

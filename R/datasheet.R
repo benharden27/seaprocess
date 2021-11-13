@@ -1,10 +1,23 @@
-#' Create complete data sheet
+#' Create complete data sheet from xls input
 #'
 #' This function reads in a hand-entered excel data sheet along with a station
 #' summary csv and combines them to produce well-formatted csv and odv file
 #' outputs.
 #'
-#' data_input is the only argument that the function *needs* to create an output. The default values for summary_input and the csv and odv outputs are set to work with the default directory configuration of the SEA cruise project so shouldn't need to be set unless you are trying to produce alternative outputs for specific custom cases.
+#' data_input is the only argument that the function *needs* to create an
+#' output. The default values for summary_input and the csv and odv outputs are
+#' set to work with the default directory configuration of the SEA cruise
+#' project so shouldn't need to be set unless you are trying to produce
+#' alternative outputs for specific custom cases.
+#'
+#' data_type can be either a stand-alone value entered into the deployment
+#' column of the station summary sheet. Or it can take one of these special
+#' cases:
+#'
+#' * "neuston" for neuston datasheets
+#' * "CTD" for ctd datasheets
+#' * "bottle" for bottle datasheets
+#' * "meter" for meter net datasheets
 #'
 #' @param data_input Filepath for the xls file with hand-recorded data values
 #' @param summary_input Filepath for the csv summary datasheet produced with
@@ -23,12 +36,17 @@
 #' @param add_deployment_type logical to tell function whether to add a new
 #'   directory to the end of the odv_folder directory path to keep .txt files
 #'   separate. Will create the new directory name depending on data_type
+#' @param ... option arguments to be sent to compile_bottle. Initially, this is
+#'   just ros_input
 #'
 #'
-#' @return
+#' @return If assigned to an object, the function will return the formatted
+#'   tibble that was exported to csv
+#'
+#' @md
+#'
 #' @export
 #'
-#' @examples
 create_datasheet <- function(data_input, summary_input = "output/csv/summary_datasheet.csv",
                              data_type = "CTD",
                              csv_folder = "output/csv", csv_filename = "datasheet.csv",
@@ -210,6 +228,12 @@ compile_neuston <- function(data) {
   }
   data <- dplyr::mutate(data, biodens = zooplankton_biovol/(station_distance/1000))
   data <- dplyr::relocate(data, biodens, .after = zooplankton_biovol)
+
+  # sum the total 100 count animals
+  data <- dplyr::rowwise(data)
+  data <- dplyr::mutate(data, total_100count = sum(dplyr::c_across(medusa:other3)))
+  # data <- dplyr::mutate(data, shannon_wiener = sum(dplyr::c_across(medusa:other3)/total_100count * log(dplyr::c_across(medusa:other3)/total_100count)))
+  data <- dplyr::ungroup(data)
 
   # Calculate moon data
   moon_data <- oce::moonAngle(data$dttm,data$lon,data$lat)

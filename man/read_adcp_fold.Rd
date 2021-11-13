@@ -6,7 +6,7 @@
 \usage{
 read_adcp_fold(
   adcp_fold,
-  file_type = "(.LTA)|(.STA)|(.ENS)|(.ENX)",
+  file_type = c(".LTA", ".STA"),
   file_select = NULL,
   calc_echo = FALSE,
   combine = FALSE,

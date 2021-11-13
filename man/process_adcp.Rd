@@ -16,11 +16,36 @@ process_adcp(
 )
 }
 \arguments{
-\item{...}{}
+\item{adcp_folder}{filepath to the folder containing adcp files}
+
+\item{cruiseID}{Optional string specifying cruise ID (i.e. "S301")}
+
+\item{csv_folder}{The directory path to output the csv file. Set to NULL for
+no csv output.}
+
+\item{csv_filename}{The csv filename to output the data}
+
+\item{odv_folder}{The directory path to output the odv file. Set to NULL for
+no odv output.}
+
+\item{odv_filename}{The odv .txt filename to output the data}
+
+\item{...}{option arguments to be passed to \code{\link[=read_adcp_fold]{read_adcp_fold()}}. A few
+options, but most likely is the file_type which defaults to '.LTA' (long
+term averages), but can be changed to ".STA" if you want to read in the
+short term averages}
+
+\item{add_cruise_ID}{If cruiseID is set, logical to specify whether cruiseID
+should be appended to beginning of filenames for csv and odv output}
 }
 \value{
 
 }
 \description{
-Master processing function for ADCP data
+Function takes in a filepath to a folder containing the cruise adcp files,
+reads them in, combines them into one data object and then exports to a
+comma-separated-file and an odv text file.
+}
+\details{
+Most likely optional arguments to go in for ...
 }

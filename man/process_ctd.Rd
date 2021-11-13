@@ -16,11 +16,32 @@ process_ctd(
 )
 }
 \arguments{
-\item{...}{}
+\item{ctd_folder}{filepath to the folder containing ctd cnv files}
+
+\item{cruiseID}{Optional string specifying cruise ID (i.e. "S301")}
+
+\item{csv_folder}{The directory path to output the csv file. Set to NULL for
+no csv output.}
+
+\item{csv_filename}{The csv filename to output the data}
+
+\item{odv_folder}{The directory path to output the odv file. Set to NULL for
+no odv output.}
+
+\item{odv_filename}{The odv .txt filename to output the data}
+
+\item{...}{optional arguments passed to \code{\link[=read_ctd_fold]{read_ctd_fold()}}. Most likely one
+you'd set would be the depth_step which is the depth resolution of output
+data in meters. Default is 1m.}
+
+\item{add_cruise_ID}{If cruiseID is set, logical to specify whether cruiseID
+should be appended to beginning of filenames for csv and odv output}
 }
 \value{
 
 }
 \description{
-Master processing function for ctd data
+Function takes in a filepath to a folder containing the cruise cnv CTD files,
+reads them in, combines them into one data object and then exports to a
+comma-separated-file and an odv text file.
 }

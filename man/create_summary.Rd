@@ -17,24 +17,52 @@ create_summary(
 )
 }
 \arguments{
-\item{summary_input}{The input datasheet that includes the relevent station and deployment metadata}
+\item{summary_input}{The input datasheet that includes the relevent station
+and deployment metadata}
 
-\item{elg}{The cruise elg file (or folder of files) for extracting continuous data from}
+\item{csv_folder}{The directory path to output the csv file. Set to NULL for
+no csv output.}
 
-\item{csv_output}{The desired output location for the well-formatted csv file}
+\item{csv_filename}{The csv filename to output the data}
+
+\item{force_stations}{logical - set to TRUE if you want to force the output to have station data at the nearest elg entry regardless of whether it is a longer time than magdiff from the nearest data row}
+
+\item{cruiseID}{Optional string specifying cruise ID (i.e. "S301")}
+
+\item{magdiff}{maximum time difference in seconds between the station time
+and the nearest elg time. If greater than this value, look to force_station
+as to whether to return a NA or add a value regardless}
+
+\item{...}{optional arguments passed to format_csv_output}
+
+\item{elg}{The cruise elg file (or folder of files) for extracting continuous
+data from}
+
+\item{add_cruise_ID}{If cruiseID is set, logical to specify whether cruiseID
+should be appended to beginning of filenames for csv and odv output}
 }
 \value{
-A tibble containing the combined data frames. If csv_output is set to a valid output path then a formatted csv file is output also.
+A tibble containing the combined data frames. If csv_folder is set to
+a valid output path then a formatted csv file is output also.
 }
 \description{
-This function combines hand-entered station metadata with electronically recorded location and environmental data to output a well formatted station summary sheet.
+This function combines hand-entered station metadata with electronically
+recorded location and environmental data to output a well formatted station
+summary sheet.
 }
 \details{
-During deployments at SEA, we maintain paper data sheets which recorded station metadata and data from that deployment. These are a vital component for our data accuracy and redundancy.
+During deployments at SEA, we maintain paper data sheets which
+recorded station metadata and data from that deployment. These are a vital
+component for our data accuracy and redundancy.
 
-In creating electronic datasheets for deployments it is desirable to combine hand-entered station metadata (station number, station type, zone description, etc.) with electronically recorded data (location, surface conditions, etc.) to provide an accurate record of the deployment without the need to re-enter hand-recorded values of the electronic data.
+In creating electronic datasheets for deployments it is desirable to combine
+hand-entered station metadata (station number, station type, zone
+description, etc.) with electronically recorded data (location, surface
+conditions, etc.) to provide an accurate record of the deployment without the
+need to re-enter hand-recorded values of the electronic data.
 
-To do this, \code{\link[=create_summary]{create_summary()}} takes in an excel sheet with the bare minimum of hand-entered data:
+To do this, \code{\link[=create_summary]{create_summary()}} takes in an excel sheet with the bare minimum
+of hand-entered data:
 \itemize{
 \item Station number
 \item Deployment type
@@ -42,7 +70,8 @@ To do this, \code{\link[=create_summary]{create_summary()}} takes in an excel sh
 \item Zone description (time zone)
 }
 
-\code{\link[=create_summary]{create_summary()}} combines this data with the electronically recorded "event" data which records (amongst other things):
+\code{\link[=create_summary]{create_summary()}} combines this data with the electronically recorded
+"event" data which records (amongst other things):
 \itemize{
 \item Time
 \item Location
@@ -51,13 +80,9 @@ To do this, \code{\link[=create_summary]{create_summary()}} takes in an excel sh
 \item etc.
 }
 
-The event data is typically stored in a file with an extension elg. \code{\link[=read_elg]{read_elg()}} deals with reading this data in and formatting it properly.
+The event data is typically stored in a file with an extension elg.
+\code{\link[=read_elg]{read_elg()}} deals with reading this data in and formatting it properly.
 
-Once the two data frames are read in to R, they are combined using the UTC time that exists in both data frames.
-}
-\examples{
-# Create a summary from S285 data input and elgs
-summary_input <- system.file("extdata", "S285_station.xlsx", package="seaprocess")
-elg_input <- system.file("extdata", "S285_elg", package="seaprocess")
-summary <- create_summary(summary_input, elg_input)
+Once the two data frames are read in to R, they are combined using the UTC
+time that exists in both data frames.
 }

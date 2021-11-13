@@ -15,9 +15,13 @@ a <- create_datasheet(data_input, data_type = "meter", summary_input = summary_i
 elg_input <- "inst/extdata/initial_example/elg/"
 a <- process_elg(elg_folder = elg_input)
 
+ctd_input <- "inst/extdata/initial_example/ctd/Cnv/"
+process_ctd(ctd_input,csv_folder = "~/Desktop", csv_filename = "ctd_test.csv",
+            odv_filename = NULL)
+
 
 elg_input <- "~/data/SEA/S299/elg/"
-a <- process_elg(elg_folder = elg_input, odv_folder = NULL, csv_folder = "~/Desktop")
+a <- process_elg(elg_folder = elg_input, odv_folder = NULL, csv_folder = "~/Desktop", average_window = 30)
 
 
 

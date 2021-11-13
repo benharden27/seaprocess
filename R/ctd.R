@@ -15,7 +15,8 @@
 #' @export
 #'
 #' @examples
-read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE, cruiseID = NULL, ...) {
+read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
+                     cruiseID = NULL, depth_vec = NULL, depth_step = 1, ...) {
 
 
 # Initial read ------------------------------------------------------------
@@ -63,7 +64,7 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE, cruiseID = NUL
   ctd@metadata$filename <- cnv_file
 
   if(to_tibble) {
-    ctd <- ctd_to_tibble(ctd, cruiseID = cruiseID)
+    ctd <- ctd_to_tibble(ctd, cruiseID = cruiseID, depth_vec = depth_vec, depth_step = depth_step)
   }
 
   return(ctd)
@@ -81,7 +82,8 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE, cruiseID = NUL
 #'
 #' @examples
 read_ctd_fold <- function(fold, check_vars = TRUE,
-                          cruiseID = NULL, depth_vec = NULL, ...) {
+                          cruiseID = NULL,
+                          depth_vec = NULL, ...) {
 
   files <- list.files(fold, pattern = "\\.cnv")
 
@@ -315,7 +317,7 @@ read_ros <- function(ros_file) {
 #' @export
 #'
 #' @examples
-ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL) {
+ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_step = 1) {
 
   # get all field names in the data set
   all_fields <- names(ctd_data@metadata$dataNamesOriginal)
@@ -398,7 +400,7 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL) {
                                cruise = ifelse(is.null(cruiseID),NA,cruiseID))
 
   # finally regrid to depth bins
-  ctd_tibble <- interpolate_depth(ctd_tibble, depth_vec = depth_vec)
+  ctd_tibble <- interpolate_depth(ctd_tibble, depth_vec = depth_vec, depth_step = depth_step)
 
   return(ctd_tibble)
 }
@@ -413,10 +415,12 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL) {
 #' @export
 #'
 #' @examples
-interpolate_depth <- function(ctd_tibble, depth_vec = NULL) {
+interpolate_depth <- function(ctd_tibble, depth_vec = NULL, depth_step = 1) {
 
   if(is.null(depth_vec)) {
-    depth_vec <- ceiling(min(ctd_tibble$dep,na.rm=T)):floor(max(ctd_tibble$dep,na.rm=T))
+    depth_vec <- seq(ceiling(min(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
+                     floor(max(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
+                     by = depth_step)
   }
 
   ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,cruise,dep,station))
