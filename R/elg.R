@@ -70,8 +70,8 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
                           "sys_date", "date", lubridate::mdy,
                           "sys_time", "^time", readr::parse_time,
                           "nav_time", "gps.*nav.*time", readr::parse_character,
-                          "nav_lon", c("gps.*nav.*lon","Longitude"), parse_lon,
-                          "nav_lat", c("gps.*nav.*lat","Latitude"), parse_lat,
+                          "nav_lon", c("gps.*nav.*lon", "Longitude"), parse_lon,
+                          "nav_lat", c("gps.*nav.*lat", "Latitude"), parse_lat,
                           "nav_sog", "gps.*nav.*sog", readr::parse_double,
                           "nav_cog", "gps.*nav.*cog", readr::parse_double,
                           "nav_quality", "gps.*nav.*quality", readr::parse_integer,
@@ -125,7 +125,7 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
   # Make datetimes from GPS using the system datetime
   df <- dplyr::mutate(df, lab_dttm = create_gps_dttm(lab_time,sys_dttm))
   df <- dplyr::mutate(df, nav_dttm = create_gps_dttm(nav_time,sys_dttm))
-
+  
   # choose master datetime
   # use nav GPS as the default and revert to lab gps and sys time as required
   if(is.null(forceGPS)) {
@@ -143,6 +143,12 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
     lon <- df$lab_lon
     lat <- df$lab_lat
     dttm <- df$lab_dttm
+  }
+
+  # check dttm - if empty (no lab or nav time available for particular cruise) just choose sys_ddtm
+  if (length(which(is.na(dttm))) == dim(df)[1]) {
+    warning(paste("Datetime issue - no GPS time found for forceGPS option: ",forceGPS,". Reverting to system datetime (sys_dttm)"))
+    dttm <- df$sys_dttm
   }
 
   # add the chosen, lon, lat and dttm
@@ -365,7 +371,7 @@ create_gps_dttm <- function(gps_time, sys_dttm) {
 
   if(length(which(is.na(gps_time))) < length(gps_time) &
      length(which(!is.na(gps_time))) > 100) {
-    sys_time <- readr::parse_time(format(sys_dttm,"%H:%M:%S"))
+    sys_time <- readr::parse_time(format(sys_dttm, "%H:%M:%S"))
     difft <- gps_time - sys_time
     goodi <- !is.na(difft)
     dayoffi <- difft < -8000
