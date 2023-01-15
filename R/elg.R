@@ -121,7 +121,7 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
   df$sys_dttm <- update(df$sys_date, hour = lubridate::hour(df$sys_time),
                         minute = lubridate::minute(df$sys_time),
                         second = lubridate::second(df$sys_time))
-
+  
   # Make datetimes from GPS using the system datetime
   df <- dplyr::mutate(df, lab_dttm = create_gps_dttm(lab_time,sys_dttm))
   df <- dplyr::mutate(df, nav_dttm = create_gps_dttm(nav_time,sys_dttm))
@@ -146,9 +146,11 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
   }
 
   # check dttm - if no gps time, revert to sys
-  if (length(which(is.na(dttm))) == dim(df)[1]) {
+  if (all(is.na(dttm))) {
     warning(paste("Datetime issue - no GPS time found for forceGPS option: ",
-     forceGPS, ". Reverting to system datetime (sys_dttm). Note lack of GPS time in EOC."))
+     forceGPS, ". Reverting to system datetime (sys_dttm). 
+     Check GPS time availability in elg file. 
+     Note lack of GPS time in EOC."))
     dttm <- df$sys_dttm
   }
 
