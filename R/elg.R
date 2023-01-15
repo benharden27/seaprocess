@@ -145,9 +145,10 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
     dttm <- df$lab_dttm
   }
 
-  # check dttm - if empty (no lab or nav time available for particular cruise) just choose sys_ddtm
+  # check dttm - if no gps time, revert to sys
   if (length(which(is.na(dttm))) == dim(df)[1]) {
-    warning(paste("Datetime issue - no GPS time found for forceGPS option: ", forceGPS, ". Reverting to system datetime (sys_dttm)"))
+    warning(paste("Datetime issue - no GPS time found for forceGPS option: ",
+     forceGPS, ". Reverting to system datetime (sys_dttm). Note lack of GPS time in EOC."))
     dttm <- df$sys_dttm
   }
 
