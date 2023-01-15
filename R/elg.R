@@ -126,6 +126,9 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
   df <- dplyr::mutate(df, lab_dttm = create_gps_dttm(lab_time,sys_dttm))
   df <- dplyr::mutate(df, nav_dttm = create_gps_dttm(nav_time,sys_dttm))
   
+  if (all(is.na(df$lab_time)) & all(is.na(df$nav_time))){
+    warning("Datetime issue - no nav or lab GPS time found. Check elg.")
+  }
   # choose master datetime
   # use nav GPS as the default and revert to lab gps and sys time as required
   if(is.null(forceGPS)) {
