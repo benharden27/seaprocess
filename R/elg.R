@@ -70,8 +70,8 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
                           "sys_date", "date", lubridate::mdy,
                           "sys_time", "^time", readr::parse_time,
                           "nav_time", "gps.*nav.*time", readr::parse_character,
-                          "nav_lon", c("gps.*nav.*lon", "Longitude"), parse_lon,
-                          "nav_lat", c("gps.*nav.*lat", "Latitude"), parse_lat,
+                          "nav_lon", c("gps.*nav.*lon", "longitude"), parse_lon,
+                          "nav_lat", c("gps.*nav.*lat", "latitude"), parse_lat,
                           "nav_sog", "gps.*nav.*sog", readr::parse_double,
                           "nav_cog", "gps.*nav.*cog", readr::parse_double,
                           "nav_quality", "gps.*nav.*quality", readr::parse_integer,
@@ -147,7 +147,7 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
 
   # check dttm - if empty (no lab or nav time available for particular cruise) just choose sys_ddtm
   if (length(which(is.na(dttm))) == dim(df)[1]) {
-    warning(paste("Datetime issue - no GPS time found for forceGPS option: ",forceGPS,". Reverting to system datetime (sys_dttm)"))
+    warning(paste("Datetime issue - no GPS time found for forceGPS option: ", forceGPS, ". Reverting to system datetime (sys_dttm)"))
     dttm <- df$sys_dttm
   }
 
