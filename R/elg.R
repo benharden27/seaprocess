@@ -1,7 +1,7 @@
 # Series of functions that work to read in an event data file
 
 #' Read in SEA data from an ELG event file and return a well formatted output
-#'
+#' 
 #' SEA event files contain output from a number of instruments
 #' including GPS, flow-through, chirp, etc.
 #'
@@ -81,8 +81,8 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
                           "lab_sog", "gps.*lab.*sog", readr::parse_double,
                           "lab_cog", "gps.*lab.*cog", readr::parse_double,
                           "lab_quality", "gps.*lab.*quality", readr::parse_integer,
-                          "temp", "tsal.*temp", readr::parse_double,
-                          "sal", "tsal.*sal", readr::parse_double,
+                          "temp", c("temperature", "tsal.*temp"), readr::parse_double,
+                          "sal", c("salinity", "tsal.*sal"), readr::parse_double,
                           "fluor", "^fluo.*invivo", readr::parse_double,
                           "fluor_1min", "fluo.*chl.*1.*min", readr::parse_double,
                           "fluor_60min", "^fluo.*chl.*60.*min", readr::parse_double,
