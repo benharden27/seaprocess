@@ -51,14 +51,34 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
 
   line <- stringr::str_which(X$r,"\\*{2}.*(T|t)ime")[1]
   time <- stringr::str_extract(X$r[line],"(?<== ).*")
+  # attempt alternative line formatting for extraction if time is NA 
+  if (is.na(time)){
+    time <- stringr::str_extract(X$r[line],"(?<=Time ).*")
+  }
   line <- stringr::str_which(X$r,"\\*{2}.*(D|d)ate")[1]
   date <- stringr::str_extract(X$r[line],"(?<== ).*")
-
+  # attempt alternative line formatting for extraction if time is NA 
+  if (is.na(date)){
+    date <- stringr::str_extract(X$r[line],"(?<=Date ).*")
+  }
   dttm <- lubridate::dmy_hm(paste(date,time),tz = "UTC")
+
+  # catch issue with datetime in aggregate
+  if (is.na(dttm)){
+    warning(paste("Could not read date and / or time from",
+            cnv_file, ". Expected line containing time to be 
+            formatted as: ** NMEA (UTC) Time = 18:35 or
+            ** Time 01:41 and date formatted as:
+            ** Date = 14 June 2019 or ** Date 19 Jan 23
+            Edit CTD/HC metadata setup fields in seabird software
+            or manually edit seaprocess output time field. 
+            Note in EOC.
+            "))
+  }
 
   ctd@metadata$longitude <- X$lon
   ctd@metadata$latitude <- X$lat
-  ctd@metadata$station <- as.numeric(strsplit(cnv_file,'-')[[1]][2]) # have to do this to make makeSection work
+  ctd@metadata$station <- as.numeric(strsplit(cnv_file,'-')[[1]][2]) # have to do this to make makeSection work.
   ctd@metadata$waterDepth <- depth
   ctd@metadata$time <- dttm
   ctd@metadata$filename <- cnv_file
