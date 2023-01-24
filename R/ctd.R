@@ -25,7 +25,8 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
   ctd_safe <- purrr::possibly(oce::read.ctd, NULL)
   ctd <- ctd_safe(cnv_file,...)
   if(is.null(ctd)) {
-    warning(paste0("No data found in ", cnv_file, ". Returning NULL."))
+    warning(paste0("No data found in ", cnv_file, " upon opening. 
+                    Check cnv file for data. Returning NULL."))
     return(ctd)
   }
 
@@ -33,6 +34,15 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
   ctd_trim <- oce::ctdTrim(ctd, parameters = list(pmin = pmin), ...)
   if(length(ctd_trim@data$temperature)==0) {
     ctd_trim <- oce::ctdTrim(ctd, parameters = list(pmin = pmin), method = "upcast")
+  }
+
+  # catch ctd dataset being empty after trimming
+  if(length(ctd_trim@data$temperature)==0) {
+    warning(paste0("No data found in ", cnv_file, " after ctdTrim,
+                  which removes surface values.
+                  Check cnv file for valid data across depths in
+                  up and/or downcasts. Returning NULL."))
+    return(NULL)
   }
 
   # Bin the CTD data into consistent pressure bins
@@ -421,7 +431,7 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_ste
 
   # finally regrid to depth bins
   ctd_tibble <- interpolate_depth(ctd_tibble, depth_vec = depth_vec, depth_step = depth_step)
-
+  
   return(ctd_tibble)
 }
 
@@ -437,19 +447,21 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_ste
 #' @examples
 interpolate_depth <- function(ctd_tibble, depth_vec = NULL, depth_step = 1) {
 
-  if(is.null(depth_vec)) {
-    depth_vec <- seq(ceiling(min(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
-                     floor(max(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
-                     by = depth_step)
-  }
+  if(dim(ctd_tibble)[1] > 0){
+    if(is.null(depth_vec)) {
+      depth_vec <- seq(ceiling(min(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
+                      floor(max(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
+                      by = depth_step)
+    }
 
-  ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,cruise,dep,station))
-  ctd_tibble <- dplyr::group_by(ctd_tibble, cruise, station, lon, lat, name)
-  ctd_tibble <- dplyr::filter(ctd_tibble, any(!is.na(value)))
-  ctd_tibble <- dplyr::summarise(ctd_tibble, h = list(depth_vec), a = list(approx(x = dep, y = value, xout = depth_vec)$y))
-  ctd_tibble <- tidyr::unnest(ctd_tibble, cols = c(h,a))
-  ctd_tibble <- tidyr::pivot_wider(ctd_tibble, names_from = name, values_from = a)
-  ctd_tibble <- dplyr::rename(ctd_tibble, dep = h)
+    ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,cruise,dep,station))
+    ctd_tibble <- dplyr::group_by(ctd_tibble, cruise, station, lon, lat, name)
+    ctd_tibble <- dplyr::filter(ctd_tibble, any(!is.na(value)))
+    ctd_tibble <- dplyr::summarise(ctd_tibble, h = list(depth_vec), a = list(approx(x = dep, y = value, xout = depth_vec)$y))
+    ctd_tibble <- tidyr::unnest(ctd_tibble, cols = c(h,a))
+    ctd_tibble <- tidyr::pivot_wider(ctd_tibble, names_from = name, values_from = a)
+    ctd_tibble <- dplyr::rename(ctd_tibble, dep = h)
+  }
 
   return(ctd_tibble)
 }
