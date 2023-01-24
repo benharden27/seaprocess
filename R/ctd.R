@@ -456,8 +456,8 @@ interpolate_depth <- function(ctd_tibble, depth_vec = NULL, depth_step = 1) {
                       by = depth_step)
     }
 
-    ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,cruise,dep,station))
-    ctd_tibble <- dplyr::group_by(ctd_tibble, cruise, station, lon, lat, name)
+    ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,dttm,cruise,dep,station))
+    ctd_tibble <- dplyr::group_by(ctd_tibble, cruise, station, lon, lat, dttm, name)
     ctd_tibble <- dplyr::filter(ctd_tibble, any(!is.na(value)))
     ctd_tibble <- dplyr::summarise(ctd_tibble, h = list(depth_vec), a = list(approx(x = dep, y = value, xout = depth_vec)$y))
     ctd_tibble <- tidyr::unnest(ctd_tibble, cols = c(h,a))
