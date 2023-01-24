@@ -41,7 +41,8 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
     warning(strwrap(paste0("No data found in ",cnv_file,"
                   after ctdTrim, which removes surface values. 
                   Check cnv file for valid data across depths in 
-                  up and/or downcasts. Returning NULL."), width = 60, prefix = " "))
+                  up and/or downcasts. Returning NULL."), 
+                  width = 60, prefix = " "))
     return(NULL)
   }
 
