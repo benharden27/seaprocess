@@ -413,7 +413,7 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_ste
   if(!is.null(cruiseID)) {
     station <- paste0(cruiseID,"-",station)
   }
-
+  
   # finally create the output data frame
   ctd_tibble <- tibble::tibble(dep = ctd_data@data$depth,
                                pres = ctd_data@data$pressure,
@@ -428,6 +428,7 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_ste
                                lon = ctd_data@metadata$longitude,
                                lat = ctd_data@metadata$latitude,
                                station = station,
+                               dttm = ctd_data@metadata$time,
                                cruise = ifelse(is.null(cruiseID),NA,cruiseID))
 
   # finally regrid to depth bins
