@@ -104,7 +104,7 @@ format_elg_odv <- function(data, odv_output = NULL ,cruiseID = NULL) {
   odv_out <- initialize_odv_tibble(data, cruiseID, type = "C")
 
   # create lookup table for field names as known to elg_read
-  odv_names <- tibble::tribble(~varname, ~odvname,
+  odv_lookup <- tibble::tribble(~varname, ~odvname,
                           "sys_date", "System Date",
                           "sys_time", "System Time",
                           "nav_time", "Nav Time",
@@ -147,32 +147,40 @@ format_elg_odv <- function(data, odv_output = NULL ,cruiseID = NULL) {
                           "wire_tension", "Wire Tension",
                           "wire_speed", "Wire Speed",
                           )
-  # get names from elg
-  elg_names <- names(data)
-  
-  # skip dttm, lat, lon
-
-  # match up varnames with odv long name
+  # get names from elg, skip dttm, lat, lon; n, filename_first, filename_last if binned
+  elg_names <- names(data)[! names(data) %in% c("dttm","lon","lat","n","filename_first","filename_last")]
 
   # subset elg to relevant columns by name
+  odv_names <- dplyr::pull(odv_lookup[odv_lookup$varname %in% elg_names,"odvname"],odvname)
 
-  # rename columns by ODV name
+  # subset and rename columns by ODV name
+  elg_sub <- data[,elg_names]
+  colnames(elg_sub) <- odv_names
 
   # add Depth [m] in first spot
+  odv_out <- tibble::add_column(odv_out, `Depth [m]` = 0)
+
+  # bind data tibble with metadata
+  odv_out <- dplyr::bind_cols(odv_out, elg_sub)
 
   # if wind speed and win dir, add E/W / N/S comp
-
-  odv_out <- tibble::add_column(odv_out,
-                                `Depth [m]` = 0,
-                                `Temperature [~^oC]` = data$temp,
-                                `Salinity [PSU]` = data$sal,
-                                `Fluorescence` = data$fluor,
-                                `Wind Speed [knots]` = data$wind_sp,
-                                `Wind Direction [deg]` = data$wind_dir,
+  if all(c("lat", "lon") %in% names(elg_names)){
+    odv_out <- tibble::add_column(odv_out,
                                 `Wind-E/W Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$u,
-                                `Wind-N/S Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$v,
-                                `CDOM` = data$cdom,
-                                `Xmiss` = data$xmiss)
+                                `Wind-N/S Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$v)
+  }
+
+  # odv_out <- tibble::add_column(odv_out,
+  #                               `Depth [m]` = 0,
+  #                               `Temperature [~^oC]` = data$temp,
+  #                               `Salinity [PSU]` = data$sal,
+  #                               `Fluorescence` = data$fluor,
+  #                               `Wind Speed [knots]` = data$wind_sp,
+  #                               `Wind Direction [deg]` = data$wind_dir,
+  #                               `Wind-E/W Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$u,
+  #                               `Wind-N/S Comp. [m/s]` = wswd_to_uv(data$wind_sp,data$wind_dir)$v,
+  #                               `CDOM` = data$cdom,
+  #                               `Xmiss` = data$xmiss)
 
   write_odv(odv_out, odv_output)
 
