@@ -169,7 +169,10 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
                       dttm = dttm)
 
   # rearrange the columns into correct order
-  df <- df[,c(42,40,41,37,1,2,39,3:8,38,9:36)]
+  # note: if modifying args above (e.g. adding
+  # variables) column indices need to be changed
+  # TO DO: reference names instead of indices
+  df <- df[,c(47,45,46,42,1,2,44,3:8,43,9:41)]
 
   # add column with filename
   file <- tail(stringr::str_split(filein, "/")[[1]],1)
