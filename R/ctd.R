@@ -89,7 +89,7 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
 
   ctd@metadata$longitude <- X$lon
   ctd@metadata$latitude <- X$lat
-  ctd@metadata$station <- as.numeric(strsplit(cnv_file,'-')[[1]][3]) # have to do this to make makeSection work.
+  ctd@metadata$station <- as.numeric(strsplit(cnv_file,'-')[[1]][2]) # have to do this to make makeSection work.
   ctd@metadata$waterDepth <- depth
   ctd@metadata$time <- dttm
   ctd@metadata$filename <- cnv_file
