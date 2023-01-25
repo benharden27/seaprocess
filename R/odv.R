@@ -103,6 +103,65 @@ format_elg_odv <- function(data, odv_output = NULL ,cruiseID = NULL) {
 
   odv_out <- initialize_odv_tibble(data, cruiseID, type = "C")
 
+  # create lookup table for field names as known to elg_read
+  odv_names <- tibble::tribble(~varname, ~odvname,
+                          "sys_date", "System Date",
+                          "sys_time", "System Time",
+                          "nav_time", "Nav Time",
+                          "nav_lon", "Nav Longitude",
+                          "nav_lat", "Nav Latitude",
+                          "nav_sog", "Nav Speed Over Ground [knots]",
+                          "nav_cog", "Nav Course Over Ground [degrees true]",
+                          "nav_quality", "Nav GPS Quality",
+                          "lab_time", "Lab Time",
+                          "lab_lon", "Lab Longitude",
+                          "lab_lat", "Lab Latitude",
+                          "lab_sog", "Lab Speed Over Ground [knots]",
+                          "lab_cog", "Lab Course Over Ground [knots]",
+                          "lab_quality", "Lab GPS Quality",
+                          "temp", "Temperature [deg C]",
+                          "temp_1min", "Temperature, 1 min avg [deg C]",
+                          "temp_60min", "Temperature, 60 min avg [dec C]",
+                          "sal", "Salinity [psu]",
+                          "sal_1min", "Salinity, 1 min avg [psu]",
+                          "sal_60min", "Salinity, 60 min avg [psu]",
+                          "sound_vel", "Sound Velocity [m/s]",
+                          "fluor", "Rel. Fluorescence",
+                          "fluor_1min", "Rel. Fluorescence, 1 min avg",
+                          "fluor_60min", "Rel. Fluorescence, 60 min avg",
+                          "cdom", "CDOM [counts]",
+                          "cdom_1min", "CDOM, 1 min avg [counts]",
+                          "cdom_60min", "CDOM, 60 min avg [counts]",
+                          "xmiss", "Transmissometer [counts]",
+                          "xmiss_1min", "Transmissometer, 1 min avg [counts]",
+                          "xmiss_60min", "Transmissometer, 60 min avg [counts]",
+                          "wind_sp", "True Wind Speed [knots]",
+                          "wind_dir", "True Wind Direction [degrees]",
+                          "wind_sp_rel", "Relative Wind Speed [knots]",
+                          "wind_dir_rel", "Relative Wind Direction [degrees]",
+                          "heading", "Ship's Heading [degrees true]",
+                          "pitch", "Pitch [degrees]",
+                          "roll", "Roll [degrees]",
+                          "depth", "CHIRP depth [m]",
+                          "wire_payout", "Wire Payout",
+                          "wire_tension", "Wire Tension",
+                          "wire_speed", "Wire Speed",
+                          )
+  # get names from elg
+  elg_names <- names(data)
+  
+  # skip dttm, lat, lon
+
+  # match up varnames with odv long name
+
+  # subset elg to relevant columns by name
+
+  # rename columns by ODV name
+
+  # add Depth [m] in first spot
+
+  # if wind speed and win dir, add E/W / N/S comp
+
   odv_out <- tibble::add_column(odv_out,
                                 `Depth [m]` = 0,
                                 `Temperature [~^oC]` = data$temp,
