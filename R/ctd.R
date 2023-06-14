@@ -25,7 +25,8 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
   ctd_safe <- purrr::possibly(oce::read.ctd, NULL)
   ctd <- ctd_safe(cnv_file,...)
   if(is.null(ctd)) {
-    warning(paste0("No data found in ", cnv_file, ". Returning NULL."))
+    warning(paste0("No data found in ", cnv_file, " upon opening. 
+                    Check cnv file for data. Returning NULL."))
     return(ctd)
   }
 
@@ -33,6 +34,16 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
   ctd_trim <- oce::ctdTrim(ctd, parameters = list(pmin = pmin), ...)
   if(length(ctd_trim@data$temperature)==0) {
     ctd_trim <- oce::ctdTrim(ctd, parameters = list(pmin = pmin), method = "upcast")
+  }
+
+  # catch ctd dataset being empty after trimming
+  if(length(ctd_trim@data$temperature)==0) {
+    warning(strwrap(paste0("No data found in ",cnv_file,"
+                  after ctdTrim, which removes surface values. 
+                  Check cnv file for valid data across depths in 
+                  up and/or downcasts. Returning NULL."), 
+                  width = 60, prefix = " "))
+    return(NULL)
   }
 
   # Bin the CTD data into consistent pressure bins
@@ -51,14 +62,34 @@ read_ctd <- function(cnv_file, pmin = 5, p = 1, to_tibble = TRUE,
 
   line <- stringr::str_which(X$r,"\\*{2}.*(T|t)ime")[1]
   time <- stringr::str_extract(X$r[line],"(?<== ).*")
+  # attempt alternative line formatting for extraction if time is NA 
+  if (is.na(time)){
+    time <- stringr::str_extract(X$r[line],"(?<=Time ).*")
+  }
   line <- stringr::str_which(X$r,"\\*{2}.*(D|d)ate")[1]
   date <- stringr::str_extract(X$r[line],"(?<== ).*")
-
+  # attempt alternative line formatting for extraction if time is NA 
+  if (is.na(date)){
+    date <- stringr::str_extract(X$r[line],"(?<=Date ).*")
+  }
   dttm <- lubridate::dmy_hm(paste(date,time),tz = "UTC")
+
+  # catch issue with datetime in aggregate
+  if (is.na(dttm)){
+    warning(paste("Could not read date and / or time from",
+            cnv_file, ". Expected line containing time to be 
+            formatted as: ** NMEA (UTC) Time = 18:35 or
+            ** Time 01:41 and date formatted as:
+            ** Date = 14 June 2019 or ** Date 19 Jan 23
+            Edit CTD/HC metadata setup fields in seabird software
+            or manually edit seaprocess output time field. 
+            Note in EOC.
+            "))
+  }
 
   ctd@metadata$longitude <- X$lon
   ctd@metadata$latitude <- X$lat
-  ctd@metadata$station <- as.numeric(strsplit(cnv_file,'-')[[1]][2]) # have to do this to make makeSection work
+  ctd@metadata$station <- as.numeric(strsplit(cnv_file,'-')[[1]][2]) # have to do this to make makeSection work.
   ctd@metadata$waterDepth <- depth
   ctd@metadata$time <- dttm
   ctd@metadata$filename <- cnv_file
@@ -382,7 +413,7 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_ste
   if(!is.null(cruiseID)) {
     station <- paste0(cruiseID,"-",station)
   }
-
+  
   # finally create the output data frame
   ctd_tibble <- tibble::tibble(dep = ctd_data@data$depth,
                                pres = ctd_data@data$pressure,
@@ -397,11 +428,12 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_ste
                                lon = ctd_data@metadata$longitude,
                                lat = ctd_data@metadata$latitude,
                                station = station,
+                               dttm = ctd_data@metadata$time,
                                cruise = ifelse(is.null(cruiseID),NA,cruiseID))
 
   # finally regrid to depth bins
   ctd_tibble <- interpolate_depth(ctd_tibble, depth_vec = depth_vec, depth_step = depth_step)
-
+  
   return(ctd_tibble)
 }
 
@@ -417,19 +449,21 @@ ctd_to_tibble <- function(ctd_data, cruiseID = NULL, depth_vec = NULL, depth_ste
 #' @examples
 interpolate_depth <- function(ctd_tibble, depth_vec = NULL, depth_step = 1) {
 
-  if(is.null(depth_vec)) {
-    depth_vec <- seq(ceiling(min(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
-                     floor(max(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
-                     by = depth_step)
-  }
+  if(dim(ctd_tibble)[1] > 0){
+    if(is.null(depth_vec)) {
+      depth_vec <- seq(ceiling(min(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
+                      floor(max(ctd_tibble$dep,na.rm=T)/depth_step)*depth_step,
+                      by = depth_step)
+    }
 
-  ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,cruise,dep,station))
-  ctd_tibble <- dplyr::group_by(ctd_tibble, cruise, station, lon, lat, name)
-  ctd_tibble <- dplyr::filter(ctd_tibble, any(!is.na(value)))
-  ctd_tibble <- dplyr::summarise(ctd_tibble, h = list(depth_vec), a = list(approx(x = dep, y = value, xout = depth_vec)$y))
-  ctd_tibble <- tidyr::unnest(ctd_tibble, cols = c(h,a))
-  ctd_tibble <- tidyr::pivot_wider(ctd_tibble, names_from = name, values_from = a)
-  ctd_tibble <- dplyr::rename(ctd_tibble, dep = h)
+    ctd_tibble <- tidyr::pivot_longer(ctd_tibble,!c(lon,lat,dttm,cruise,dep,station))
+    ctd_tibble <- dplyr::group_by(ctd_tibble, cruise, station, lon, lat, dttm, name)
+    ctd_tibble <- dplyr::filter(ctd_tibble, any(!is.na(value)))
+    ctd_tibble <- dplyr::summarise(ctd_tibble, h = list(depth_vec), a = list(approx(x = dep, y = value, xout = depth_vec)$y))
+    ctd_tibble <- tidyr::unnest(ctd_tibble, cols = c(h,a))
+    ctd_tibble <- tidyr::pivot_wider(ctd_tibble, names_from = name, values_from = a)
+    ctd_tibble <- dplyr::rename(ctd_tibble, dep = h)
+  }
 
   return(ctd_tibble)
 }
