@@ -1,7 +1,7 @@
 # Series of functions that work to read in an event data file
 
 #' Read in SEA data from an ELG event file and return a well formatted output
-#'
+#' 
 #' SEA event files contain output from a number of instruments
 #' including GPS, flow-through, chirp, etc.
 #'
@@ -70,8 +70,8 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
                           "sys_date", "date", lubridate::mdy,
                           "sys_time", "^time", readr::parse_time,
                           "nav_time", "gps.*nav.*time", readr::parse_character,
-                          "nav_lon", "gps.*nav.*lon", parse_lon,
-                          "nav_lat", "gps.*nav.*lat", parse_lat,
+                          "nav_lon", c("gps.*nav.*lon", "longitude"), parse_lon,
+                          "nav_lat", c("gps.*nav.*lat", "latitude"), parse_lat,
                           "nav_sog", "gps.*nav.*sog", readr::parse_double,
                           "nav_cog", "gps.*nav.*cog", readr::parse_double,
                           "nav_quality", "gps.*nav.*quality", readr::parse_integer,
@@ -81,8 +81,13 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
                           "lab_sog", "gps.*lab.*sog", readr::parse_double,
                           "lab_cog", "gps.*lab.*cog", readr::parse_double,
                           "lab_quality", "gps.*lab.*quality", readr::parse_integer,
-                          "temp", "tsal.*temp", readr::parse_double,
-                          "sal", "tsal.*sal", readr::parse_double,
+                          "temp", c("temp(?!.*[0-9])", "tsal.*temp"), readr::parse_double,
+                          "temp_1min", "temp.*1.*min", readr::parse_double,
+                          "temp_60min", "temp.*60.*min", readr::parse_double,
+                          "sal", c("sal(?!.*[0-9])(?!.*vel)", "tsal.*sal"), readr::parse_double,
+                          "sal_1min", "sal.*1.*min", readr::parse_double,
+                          "sal_60min", "sal.*60.*min", readr::parse_double,
+                          "sound_vel", "tsal.*vel", readr::parse_double,
                           "fluor", "^fluo.*invivo", readr::parse_double,
                           "fluor_1min", "fluo.*chl.*1.*min", readr::parse_double,
                           "fluor_60min", "^fluo.*chl.*60.*min", readr::parse_double,
@@ -121,11 +126,14 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
   df$sys_dttm <- update(df$sys_date, hour = lubridate::hour(df$sys_time),
                         minute = lubridate::minute(df$sys_time),
                         second = lubridate::second(df$sys_time))
-
+  
   # Make datetimes from GPS using the system datetime
   df <- dplyr::mutate(df, lab_dttm = create_gps_dttm(lab_time,sys_dttm))
   df <- dplyr::mutate(df, nav_dttm = create_gps_dttm(nav_time,sys_dttm))
-
+  
+  if (all(is.na(df$lab_time)) & all(is.na(df$nav_time))){
+    warning("Datetime issue - no nav or lab GPS time found. Check elg.")
+  }
   # choose master datetime
   # use nav GPS as the default and revert to lab gps and sys time as required
   if(is.null(forceGPS)) {
@@ -145,6 +153,15 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
     dttm <- df$lab_dttm
   }
 
+  # check dttm - if no gps time, revert to sys
+  if (all(is.na(dttm))) {
+    warning(paste("Datetime issue - no GPS time found for forceGPS option: ",
+     forceGPS, ". Reverting to system datetime (sys_dttm). 
+     Check GPS time availability in elg file. 
+     Note lack of GPS time in EOC."))
+    dttm <- df$sys_dttm
+  }
+
   # add the chosen, lon, lat and dttm
   df <- dplyr::mutate(df,
                       lon = lon,
@@ -152,7 +169,10 @@ read_elg <- function(filein, forceGPS = NULL, preCheck = TRUE, skip = 0,
                       dttm = dttm)
 
   # rearrange the columns into correct order
-  df <- df[,c(42,40,41,37,1,2,39,3:8,38,9:36)]
+  # note: if modifying args above (e.g. adding
+  # variables) column indices need to be changed
+  # TO DO: reference names instead of indices
+  df <- df[,c(47,45,46,42,1,2,44,3:8,43,9:41)]
 
   # add column with filename
   file <- tail(stringr::str_split(filein, "/")[[1]],1)
@@ -365,7 +385,7 @@ create_gps_dttm <- function(gps_time, sys_dttm) {
 
   if(length(which(is.na(gps_time))) < length(gps_time) &
      length(which(!is.na(gps_time))) > 100) {
-    sys_time <- readr::parse_time(format(sys_dttm,"%H:%M:%S"))
+    sys_time <- readr::parse_time(format(sys_dttm, "%H:%M:%S"))
     difft <- gps_time - sys_time
     goodi <- !is.na(difft)
     dayoffi <- difft < -8000
