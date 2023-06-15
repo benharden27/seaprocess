@@ -145,7 +145,7 @@ format_elg_odv <- function(data, odv_output = NULL ,cruiseID = NULL) {
                           "depth", "CHIRP depth [m]",
                           "wire_payout", "Wire Payout",
                           "wire_tension", "Wire Tension",
-                          "wire_speed", "Wire Speed",
+                          "wire_speed", "Wire Speed"
                           )
   # get names from elg, skip dttm, lat, lon; n, filename_first, filename_last if binned
   elg_names <- names(data)[! names(data) %in% c("dttm","lon","lat","n","filename_first","filename_last")]
