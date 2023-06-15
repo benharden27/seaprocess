@@ -15,7 +15,7 @@ initialize_example <- function(path, ...) {
 
 }
 
-# master intializing function
+# master initializing function
 initialize_master <- function(path, cruiseID = NULL,
                               initial_folder =  "initial_dir",
                               ...) {
@@ -36,10 +36,15 @@ initialize_master <- function(path, cruiseID = NULL,
             path,
             recursive = TRUE)
 
-  if(!dir.exists(file.path(path,"ctd"))) {
-    dir.create(file.path(path,"ctd"))
+  # Create raw input data paths
+  if(!dir.exists(file.path(path,"raw"))) {
+    dir.create(file.path(path,"raw"))
+    dir.create(file.path(path,"raw","ctd"))
+    dir.create(file.path(path,"raw","adcp"))
+    dir.create(file.path(path,"raw","event"))
   }
 
+  # Create output paths
   if(!dir.exists(file.path("output"))) {
     dir.create(file.path(path,"output"))
     dir.create(file.path(path,"output","csv"))

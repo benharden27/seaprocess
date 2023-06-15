@@ -2,7 +2,7 @@
 ###
 
 # This script is intended to be edited. You wont mess anything up with the raw
-# data or data entred into the input datasheets by changing anything in here.
+# data or data entered into the input datasheets by changing anything in here.
 # You *may* end up overwriting some output data, but that is all
 # recoverable.
 
@@ -25,7 +25,7 @@ cruiseID <- ""
 # Data folders
 #
 # elg_folder will most likely be on the datalogger computer. This folder has to
-# just contain data from this cruise. IT can have other files other than .elg
+# just contain data from this cruise. It can have other files other than .elg
 # files in there, but shouldn't have data from previous cruises
 #
 # ctd_folder can be the local ctd folder where you can put .cnv and .ros files
@@ -38,8 +38,8 @@ cruiseID <- ""
 # ADCP files in there, but will only read, by default the LTA files
 #
 elg_folder <- "<enter-location-of-elg-folder>"
-ctd_folder <- "ctd"
-ros_folder <- "ctd"
+ctd_folder <- "<enter-location-of-ctd-folder>"
+ros_folder <- "<enter-location-of-ros-folder>"
 adcp_folder <- "<enter-location-of-adcp-folder>"
 
 
