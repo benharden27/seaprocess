@@ -226,6 +226,11 @@ compile_neuston <- function(data) {
   if(length(which(is.na(data$station_distance)))>0) {
     warning("One or more tow distances are not available - be sure that they exist in the summary data csv")
   }
+
+  # Make sure all non note/description/station columns are numeric
+  data <- dplyr::mutate(data,dplyr::across(!dplyr::matches("note|desc|stat"),as.numeric))
+
+  # calculate the biodensity
   data <- dplyr::mutate(data, biodens = zooplankton_biovol/(station_distance/1000))
   data <- dplyr::relocate(data, biodens, .after = zooplankton_biovol)
 
