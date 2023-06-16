@@ -1,27 +1,28 @@
 #' Create complete data sheet from xls input
 #'
 #' This function reads in a hand-entered excel data sheet along with a station
-#' summary csv and combines them to produce well-formatted csv and odv file
+#' summary csv file (created using `create_summary()`) and combines them to produce well-formatted csv and odv file
 #' outputs.
 #'
 #' data_input is the only argument that the function *needs* to create an
 #' output. The default values for summary_input and the csv and odv outputs are
 #' set to work with the default directory configuration of the SEA cruise
 #' project so shouldn't need to be set unless you are trying to produce
-#' alternative outputs for specific custom cases.
+#' alternative outputs for specific custom cases or trials.
 #'
 #' data_type can be either a stand-alone value entered into the deployment
 #' column of the station summary sheet. Or it can take one of these special
 #' cases:
 #'
+#' * "CTD" for ctd datasheets (default)
 #' * "neuston" for neuston datasheets
-#' * "CTD" for ctd datasheets
 #' * "bottle" for bottle datasheets
 #' * "meter" for meter net datasheets
+#' * "<custom>" for custom datasheets you've created and given a unique code to in station summary
 #'
-#' @param data_input Filepath for the xls file with hand-recorded data values
-#' @param summary_input Filepath for the csv summary datasheet produced with
-#'   create_summary() (see details below)
+#' @param data_input File path for the .xls file with hand-recorded data values. These are created by default in the "datasheets" folder and all have the suffix "_input"
+#' @param summary_input File path for the csv summary datasheet produced with
+#'   create_summary() (see details below). This defaults to the output/csv folder in the standard SEA data project organization
 #' @param data_type The data type code that will draw data from the summary
 #'   sheet (see details below)
 #' @param csv_folder The directory path to output the csv file. Set to NULL for
@@ -33,7 +34,8 @@
 #' @param cruiseID Optional string specifying cruise ID (i.e. "S301")
 #' @param add_cruise_ID If cruiseID is set, logical to specify whether cruiseID
 #'   should be appended to beginning of filenames for csv and odv output
-#' @param add_deployment_type logical to tell function whether to add a new
+#' @param add_deployment_type logical to tell function whether to add the default deployment type to the beginning of the filename that is being created.
+#' @param add_deployment_fold logical to tell function whether to add a new
 #'   directory to the end of the odv_folder directory path to keep .txt files
 #'   separate. Will create the new directory name depending on data_type
 #' @param ... option arguments to be sent to compile_bottle. Initially, this is
@@ -126,7 +128,7 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
   colnames(data) <- stringr::str_remove_all(colnames(data), "\\.")
 
   # read in station summary datasheet
-  # TODO: determine what formating to apply when read in (beyond zd)
+  # TODO: determine what formatting to apply when read in (beyond zd)
   summary <- readr::read_csv(
     summary_input,
     col_types = readr::cols(
