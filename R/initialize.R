@@ -24,7 +24,7 @@ initialize_master <- function(path, cruiseID = NULL,
     cruiseID <- basename(path)
   }
 
-  # ensure path exists but dont overwrite project
+  # ensure path exists but don't overwrite project
   if(!dir.exists(path)) {
     dir.create(path, recursive = TRUE, showWarnings = FALSE)
   } else {

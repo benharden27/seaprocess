@@ -21,10 +21,10 @@ library(seaprocess)
 
 cruiseID <- ""
 
-adcp_folder <- "adcp"
-ctd_folder <- "ctd/Cnv"
-elg_folder <- "elg"
-ros_folder <- "ctd/Cnv"
+adcp_folder <- "raw/adcp"
+ctd_folder <- "raw/ctd/Cnv"
+elg_folder <- "raw/event"
+ros_folder <- "raw/ctd/Cnv"
 
 summary_input <- "datasheets/summary_input.xls"
 ctd_input <- "datasheets/ctd_input.xls"

@@ -79,6 +79,9 @@ process_adcp(adcp_folder, cruiseID = cruiseID)
 # sheet will then be used by subsequent functions to add metadata to their
 # datasheets
 
+# Create Summary datasheet
+create_summary(summary_input, elg_folder, cruiseID = cruiseID)
+
 # CTD datasheet
 create_datasheet(ctd_input, data_type = "CTD",
                  cruiseID = cruiseID)
