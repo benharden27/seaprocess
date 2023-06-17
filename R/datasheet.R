@@ -127,6 +127,12 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
   colnames(data) <- stringr::str_remove_all(colnames(data), "_%")
   colnames(data) <- stringr::str_remove_all(colnames(data), "\\.")
 
+  # makes a neuston correction if not enough rows to make good on the excel read
+  if(nrow(data)<2 & data_type == "NT") {
+    # Make sure all non note/description/station columns are numeric
+    data <- dplyr::mutate(data,dplyr::across(!dplyr::matches("note|desc|stat"),as.numeric))
+  }
+
   # read in station summary datasheet
   # TODO: determine what formatting to apply when read in (beyond zd)
   summary <- readr::read_csv(
@@ -139,9 +145,7 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
   # filter by data_type
   summary <- dplyr::filter(summary, deployment %in% data_type)
 
-
-
-  # Bottle specific stuff
+  # Bottle specific stuff for combining summary, otherwise right join
   if(sum(data_type %in% c("HC", "B")) > 1) {
 
     data <- dplyr::mutate(data, bottle = as.character(bottle))
@@ -162,7 +166,7 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
     data <- compile_neuston(data)
   }
 
-  # Neuston specific stuff
+  # Meter net specific stuff
   if(sum(data_type %in% c("MN","2MN")) > 0) {
     data <- compile_meter(data)
   }
@@ -228,9 +232,6 @@ compile_neuston <- function(data) {
   if(length(which(is.na(data$station_distance)))>0) {
     warning("One or more tow distances are not available - be sure that they exist in the summary data csv")
   }
-
-  # Make sure all non note/description/station columns are numeric
-  data <- dplyr::mutate(data,dplyr::across(!dplyr::matches("note|desc|stat"),as.numeric))
 
   # calculate the biodensity
   data <- dplyr::mutate(data, biodens = zooplankton_biovol/(station_distance/1000))
