@@ -128,7 +128,7 @@ create_datasheet <- function(data_input, summary_input = "output/csv/summary_dat
   colnames(data) <- stringr::str_remove_all(colnames(data), "\\.")
 
   # makes a neuston correction if not enough rows to make good on the excel read
-  if(nrow(data)<2 & data_type == "NT") {
+  if(sum(data_type %in% "NT")>0) {
     # Make sure all non note/description/station columns are numeric
     data <- dplyr::mutate(data,dplyr::across(!dplyr::matches("note|desc|stat"),as.numeric))
   }
